@@ -2,5 +2,11 @@ language: python
 python:
   - "3.8.1"
 
+env:
+  - DJANGO_VERSION=3.0.3
+
+install:
+  - pip install -q Django==$DJANGO_VERSION
+
 script:
   - cd WebScraper && python manage.py runserver
