@@ -3,4 +3,4 @@ python:
   - "3.8.1"
 
 script:
-  - python mangae.py runserver
+  - python manage.py runserver
