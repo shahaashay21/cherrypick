@@ -1,12 +1,9 @@
-language: python
-python:
-  - "3.8.1"
+language: node_js
+node_js:
+  - 12.16.0
 
-env:
-  - DJANGO_VERSION=3.0.3
-
-install:
-  - pip install -q Django==$DJANGO_VERSION
-
+before_script:
+  - npm install
+  
 script:
-  - cd WebScraper && python manage.py test
+  - cd WebScraper && npm test
