@@ -3,7 +3,8 @@ node_js:
   - 12.16.0
 
 before_script:
+  - cd WebScraper
   - npm install
-  
+
 script:
-  - cd WebScraper && npm test
+  - npm test
