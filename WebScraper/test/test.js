@@ -5,7 +5,7 @@ const server = require('../bin/www');
 
 describe('Unit tests', function() {
 
-  this.timeout(4000);
+  this.timeout(5000);
 
   this.afterAll(function(){
     server.close();

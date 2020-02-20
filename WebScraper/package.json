@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "test": "mocha"
+    "test": "mocha-parallel-tests"
   },
   "dependencies": {
     "axios": "^0.19.2",
@@ -14,12 +14,14 @@
     "ejs": "~2.6.1",
     "express": "~4.16.1",
     "http-errors": "~1.6.3",
-    "log4js": "^6.1.2",
-    "morgan": "~1.9.1"
+    "morgan": "~1.9.1",
+    "winston": "^3.2.1",
+    "winston-daily-rotate-file": "^4.4.2"
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "mocha": "^7.0.1",
+    "mocha-parallel-tests": "^2.3.0",
     "request": "^2.88.2"
   }
 }
