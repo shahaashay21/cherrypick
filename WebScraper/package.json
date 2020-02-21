@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "test": "mocha-parallel-tests"
+    "test": "mocha"
   },
   "dependencies": {
     "axios": "^0.19.2",
@@ -21,7 +21,6 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "mocha": "^7.0.1",
-    "mocha-parallel-tests": "^2.3.0",
     "request": "^2.88.2"
   }
 }
