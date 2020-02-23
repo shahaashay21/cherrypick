@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "nodemon ./bin/www",
-    "test": "mocha --timeout 10000"
+    "test": "mocha"
   },
   "dependencies": {
     "axios": "^0.19.2",
