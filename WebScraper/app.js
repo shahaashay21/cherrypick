@@ -9,6 +9,7 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var amazonRouter = require('./routes/amazon');
 var bestbuyRouter = require('./routes/bestbuy');
+var walmartRouter = require('./routes/walmart');
 
 var app = express();
 
@@ -28,6 +29,7 @@ app.use('/users', usersRouter);
 
 app.use('/amazon', amazonRouter);
 app.use('/bestbuy', bestbuyRouter);
+app.use('/walmart', walmartRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

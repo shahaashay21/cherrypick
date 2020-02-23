@@ -37,7 +37,6 @@ const getInfo = function(req, res){
         let $ = cheerio.load(html.data);
         let itemList = $(".sku-item-list > li");
         for(let i = 0; i < itemList.length; i++){
-            logger.info(`Value of i is ` + i);
             if(totalItems <= 0) break;
             const isProduct = $(itemList[i]).hasClass("sku-item");
             if(isProduct){

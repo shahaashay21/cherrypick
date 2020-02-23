@@ -18,7 +18,7 @@ describe('Unit tests', function() {
     });
   });
   
-  
+
   // Amazon APIs
   describe('Amazon', function() {
 
@@ -88,6 +88,44 @@ describe('Unit tests', function() {
         }
       });
     });
-
   });
+
+
+  // Walmart APIs
+  describe('Walmart', function() {
+
+    it('should return 200 status code for product info API ', function(done) {
+      request(url + "/walmart?url=https://www.walmart.com/ip/Wireless-Charging-Case-for-AirPods/910249719" , function(error, response, body) {
+        expect(response.statusCode).to.equal(200);
+        done();
+      });
+    });
+
+    it('should return 4 product information ', function(done) {
+      request(url + "/walmart?url=https://www.walmart.com/ip/Wireless-Charging-Case-for-AirPods/910249719" , function(error, response, body) {
+        body = JSON.parse(body);
+        if(body.error == 0){
+          expect(Object.keys(body.productInfo).length).to.equal(5);
+          done();
+        } else {
+          done(body.message);
+        }
+      });
+    });
+
+    it('should return 3 suggested products ', function(done) {
+      request(url + "/walmart/products/airpod%20charging%20case" , function(error, response, body) {
+        body = JSON.parse(body);
+        if(body.error == 0){
+          expect(Object.keys(body.productsInfo).length).to.equal(3);
+          done();
+        } else {
+          done(body.message);
+        }
+      });
+    });
+  });
+
+
+
 });
