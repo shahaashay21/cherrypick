@@ -5,6 +5,7 @@ var logger = require('../utils/winston');
 const productInfo = function(req, res, next){
     const url = req.query.url;
     let productInfo = {};
+    let response = {};
 
     axios.get(url).then((html) => {
         let $ = cheerio.load(html.data);
@@ -13,10 +14,13 @@ const productInfo = function(req, res, next){
         productInfo['title'] = productInfo['title'].replace(/\\n/gm, "").trim();
         productInfo['ratings'] = $(".reviewCountTextLinkedHistogram").attr("title").match(/(^[0-9]*\.*[0-9]*)\s/gm)[0].trim();
         productInfo['url'] = url;
-        logger.info("Product url: " + url, "productInfo()");
-        res.json(productInfo);
+        response['error'] = 0;
+        response['productInfo'] = productInfo;
+        res.json(response);
     }).catch (function (e) {
-        res.send(e);
+        logger.error(e.message);
+        response['error'] = 1;
+        response['message'] = e.message;
     });
 };
 
@@ -26,6 +30,7 @@ const getInfo = function(req, res){
     let productsInfo = {};
     let totalItems = 3;
     let j = 0;
+    let response = {};
 
     axios.get(url).then((html) => {
         let $ = cheerio.load(html.data);
@@ -38,15 +43,19 @@ const getInfo = function(req, res){
                 productsInfo[j] = {};
                 productsInfo[j]['price'] = $(itemList[i]).find(".a-price > .a-offscreen").html();
                 productsInfo[j]['productUrl'] = "http://amazon.com"+$(itemList[i]).find("a.a-link-normal.a-text-normal").attr("href");
-                productsInfo[j]['productName'] = $(itemList[i]).find("a.a-link-normal.a-text-normal").find("span").html();
+                productsInfo[j]['productName'] = $(itemList[i]).find("a.a-link-normal.a-text-normal").find("span").text();
                 productsInfo[j]['ratings'] = $(itemList[i]).find(".a-popover-trigger").text().match(/(^[0-9]*\.*[0-9]*)\s/gm)[0].trim();
                 productsInfo[j]['index'] = j;
                 j++;
             }
         }
-        res.json(productsInfo);
+        response['error'] = 0;
+        response['productsInfo'] = productsInfo;
+        res.json(response);
     }).catch(function(e){
-        res.send(e);
+        logger.error(e.message);
+        response['error'] = 1;
+        response['message'] = e.message;
     });
 }
 
