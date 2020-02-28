@@ -1,6 +1,6 @@
 // Initalize
 chrome.runtime.onInstalled.addListener(function() {
-    chrome.storage.sync.set({ "limit": 0, "total": 0 });
+    chrome.storage.sync.set({ "cp": JSON.stringify({}), "lastAccessed": Date.now() });
     console.log("Hey");
 });
 
@@ -8,7 +8,7 @@ chrome.runtime.onInstalled.addListener(function() {
 var contextMenuItem = {
     id: "cp-compare",
     title: "Compare Price",
-    "contexts": ["all"]
+    "contexts": ["page"]
 }
 
 chrome.contextMenus.create(contextMenuItem);
@@ -16,41 +16,58 @@ chrome.contextMenus.create(contextMenuItem);
 // Context menu listener
 chrome.contextMenus.onClicked.addListener(function(clickedData){
     if(clickedData.menuItemId == "cp-compare"){
-        console.log(clickedData);
-        console.log(clickedData.pageUrl);
-        // if(parseInt(clickedData.selectionText)){
-        //     var newTotal = 0;
-        //     chrome.storage.sync.get(["total", "limit"], function(budget){
-        //         if(budget.total > 0){
-        //             newTotal += parseInt(budget.total);
-        //         }
-    
-        //         var amount = parseInt(clickedData.selectionText);
-        //         if(amount){
-        //             newTotal += parseInt(amount);
-        //         }
-    
-        //         if(amount && newTotal > budget.limit){
-        //             var notifOptions = {
-        //                 type: 'basic',
-        //                 iconUrl: 'icon48.png',
-        //                 title: 'Limit Reached!',
-        //                 message: "Uh Oh! Looks like you've reached your limit!"
-        //             }
-        //             chrome.notifications.create('limitNotif', notifOptions);
-        //         }
-    
-        //         chrome.storage.sync.set({ "total": newTotal });
-        //     });
-        // }
+        var pageUrl = clickedData.pageUrl;
+        if(validURL(pageUrl) && supportedUrl(pageUrl)){
+            chrome.storage.sync.get(['cp'], function(chromeData){
+                chromeData.cp = JSON.parse(chromeData.cp);
+                chrome.storage.sync.set({ "lastAccessed": Date.now() });
+                if(Object.keys(chromeData.cp).length > 0){
+                    chromeData.cp[pageUrl] = Date.now();
+                    chrome.storage.sync.set({ 'cp': JSON.stringify(chromeData.cp) });
+                } else {
+                    var cp = {};
+                    cp[pageUrl] = Date.now();
+                    chrome.storage.sync.set({ 'cp': JSON.stringify(cp) });
+                }
+            });
+
+//         if(amount && newTotal > budget.limit){
+//             var notifOptions = {
+//                 type: 'basic',
+//                 iconUrl: 'icon48.png',
+//                 title: 'Limit Reached!',
+//                 message: "Uh Oh! Looks like you've reached your limit!"
+//             }
+//             chrome.notifications.create('limitNotif', notifOptions);
+//         }
+
+        } else {
+            console.log("Current URL is not supported: " + pageUrl);
+        }
     }
 });
 
 
 // Storage value change listener
 chrome.storage.onChanged.addListener(function(changes, storageName){
-    if(storageName == "sync" && "total" in changes){
-        chrome.browserAction.setBadgeText({ "text": changes.total.newValue.toString() });
+    if(storageName == "sync" && "cp" in changes){
+        var totalItems = Object.keys(JSON.parse(changes.cp.newValue)).length;
+        chrome.browserAction.setBadgeText({ "text": totalItems.toString() });
     }
     
-})
+});
+
+function validURL(myURL) {
+    var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
+    '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|'+ // domain name
+    '((\\d{1,3}\\.){3}\\d{1,3}))'+ // ip (v4) address
+    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ //port
+    '(\\?[;&amp;a-z\\d%_.~+=-]*)?'+ // query string
+    '(\\#[-a-z\\d_]*)?$','i');
+    return pattern.test(myURL);
+}
+
+function supportedUrl(myURL){
+    var supportedRegEx = /((amazon|amzn)\.com|walmart\.com|bestbuy\.com)/gmi;
+    return supportedRegEx.test(myURL);
+}
