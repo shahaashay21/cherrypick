@@ -1,0 +1,26 @@
+{
+    "manifest_version": 2,
+    "name": "Cherry Picker",
+    "version": "1.1",
+    "description": "Compare the price among all the e-commerce websites to give you the best CHERRY.",
+    "icons": {
+        "128": "icons/cherries-128.png",
+        "48": "icons/cherries-48.png",
+        "16": "icons/cherries-16.png"
+    },
+    "browser_action": {
+        "default_icon": "icons/cherries-16.png",
+        "default_popup": "html/popup.html"
+    },
+    "options_page": "html/options.html",
+    "background": {
+        "scripts": ["js/eventPage.js"],
+        "persistent": false
+    },
+    "permissions": [
+        "storage",
+        "debugger",
+        "notifications",
+        "contextMenus"
+    ]
+}

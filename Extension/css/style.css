@@ -1,0 +1,24 @@
+.cp-header{
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 600px;
+    box-shadow: 0 1px 4px 0 rgba(0,0,0,0.25);
+}
+.cp-title a {
+    color: #db2e2e !important;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 16px;
+    font-family: "'Helvetica Neue', Helvetica, Arial, sans-serif";
+    margin: 0px 10px;
+}
+
+.navbar-nav a {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+}
+
+.cp-header a.active {
+    border-bottom: 4px solid #db2e2e;
+}

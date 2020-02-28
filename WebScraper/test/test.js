@@ -101,7 +101,7 @@ describe('Unit tests', function() {
       });
     });
 
-    it('should return 4 product information ', function(done) {
+    it('should return 5 product information ', function(done) {
       request(url + "/walmart?url=https://www.walmart.com/ip/Wireless-Charging-Case-for-AirPods/910249719" , function(error, response, body) {
         body = JSON.parse(body);
         if(body.error == 0){
