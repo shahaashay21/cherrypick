@@ -1,8 +1,10 @@
+body{
+    width: 650px;
+}
 .cp-header{
     top: 0;
     left: 0;
     right: 0;
-    width: 600px;
     box-shadow: 0 1px 4px 0 rgba(0,0,0,0.25);
 }
 .cp-title a {
@@ -21,4 +23,21 @@
 
 .cp-header a.active {
     border-bottom: 4px solid #db2e2e;
+}
+
+
+.cp-body{
+    box-shadow: 0 1px 4px 0 rgba(0,0,0,0.25);
+    height: 400px;
+}
+
+.cp-left-body{
+    width: 230px;
+    float: left;
+    box-shadow: 6px 0px 4px -4px rgba(0,0,0,0.25);
+    height: 400px;
+}
+
+.cp-right-body{
+    height: 400px;
 }

@@ -2,10 +2,13 @@ var expect  = require('chai').expect;
 const url = "http://localhost:3000";
 const request = require('request');
 const server = require('../bin/www');
+const loadtest = require('loadtest');
 
 describe('Unit tests', function() {
 
-  this.timeout(5000);
+  // 50 Seconds
+  const requestTimeOut = 50000;
+  this.timeout(requestTimeOut);
 
   this.afterAll(function(){
     server.close();
@@ -15,6 +18,40 @@ describe('Unit tests', function() {
     request(url , function(error, response, body) {
         expect(response.statusCode).to.equal(200);
         done();
+    });
+  });
+
+  // performance testing
+  describe('Performance', function(){
+    const maxRequests = 100;
+    const requestsPerSecond = 25;
+    it(`should perform ${requestsPerSecond} requests per hour`, function(done){
+      function statusCallback(error, result, latency) {
+          console.log('Current latency %j, result %j, error %j', latency, result, error);
+          console.log('----');
+          console.log('Request elapsed milliseconds: ', result.requestElapsed);
+          console.log('Request index: ', result.requestIndex);
+          console.log('Request loadtest() instance index: ', result.instanceIndex);
+      }
+      const options = {
+        // url: 'http://localhost:3000/amazon/products/Acer%20SB220Q%20bi%2021.5%20inches%20Full%20HD%20(1920%20x%201080)%20IPS%20Ultra-Thin%20Zero%20Frame%20Monitor%20(HDMI%20&%20VGA%20port)',
+        url: 'http://localhost:3000//walmart/products/airpod%20charging%20case',
+        maxRequests: maxRequests,
+        requestsPerSecond: requestsPerSecond,
+        timeout: requestTimeOut,
+        // statusCallback: statusCallback
+      };
+
+      loadtest.loadTest(options, function(error)
+      {
+        if (error) {
+          console.error('Got an error: %s', error);
+          done(error);
+        } else {
+          console.log('Tests run successfully');
+          done();
+       }
+      });
     });
   });
   
