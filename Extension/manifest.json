@@ -19,8 +19,8 @@
     },
     "permissions": [
         "storage",
-        "debugger",
         "notifications",
-        "contextMenus"
+        "contextMenus",
+        "identity"
     ]
 }

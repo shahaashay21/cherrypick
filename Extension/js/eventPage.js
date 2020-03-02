@@ -1,8 +1,13 @@
 // Initalize
+let productInitialization = {
+    "new": new Array(),
+    "expired": new Array()
+}
 chrome.runtime.onInstalled.addListener(function() {
-    chrome.storage.sync.set({ "cp": JSON.stringify({}), "lastAccessed": Date.now() });
-    console.log("Hey");
+    console.log("Welcome to Cherry-Pick");
+    chrome.storage.sync.set({ "products": JSON.stringify(productInitialization), "lastAccessed": Date.now() });
 });
+
 
 // add context menu (right click on the page)
 var contextMenuItem = {
@@ -10,48 +15,61 @@ var contextMenuItem = {
     title: "Compare Price",
     "contexts": ["page"]
 }
-
 chrome.contextMenus.create(contextMenuItem);
+
 
 // Context menu listener
 chrome.contextMenus.onClicked.addListener(function(clickedData){
+    newLinkListner(clickedData);
+});
+
+async function newLinkListner(clickedData){
     if(clickedData.menuItemId == "cp-compare"){
         var pageUrl = clickedData.pageUrl;
         if(validURL(pageUrl) && supportedUrl(pageUrl)){
-            chrome.storage.sync.get(['cp'], function(chromeData){
-                chromeData.cp = JSON.parse(chromeData.cp);
-                chrome.storage.sync.set({ "lastAccessed": Date.now() });
-                if(Object.keys(chromeData.cp).length > 0){
-                    chromeData.cp[pageUrl] = Date.now();
-                    chrome.storage.sync.set({ 'cp': JSON.stringify(chromeData.cp) });
-                } else {
-                    var cp = {};
-                    cp[pageUrl] = Date.now();
-                    chrome.storage.sync.set({ 'cp': JSON.stringify(cp) });
-                }
-            });
-
-//         if(amount && newTotal > budget.limit){
-//             var notifOptions = {
-//                 type: 'basic',
-//                 iconUrl: 'icon48.png',
-//                 title: 'Limit Reached!',
-//                 message: "Uh Oh! Looks like you've reached your limit!"
-//             }
-//             chrome.notifications.create('limitNotif', notifOptions);
-//         }
-
+            chrome.storage.sync.set({ "lastAccessed": Date.now() });
+            await addProduct(pageUrl);
         } else {
             console.log("Current URL is not supported: " + pageUrl);
         }
     }
-});
+}
+
+function addProduct(link, price = null, name = null, suggestions = null, done){
+    return new Promise(resolve => {
+        chrome.storage.sync.get(['products'], async function(chromeData){
+            products = JSON.parse(chromeData.products);
+            let sameProduct = await isSameProduct(products.new, link);
+            if(sameProduct){
+                return resolve();
+            }
+            var product = {};
+            product['link'] = link;
+            product['timestamp'] = Date.now();
+            products["new"].push(product);
+            chrome.storage.sync.set({ 'products': JSON.stringify(products) });
+            return resolve();
+        });
+    });
+}
+
+function isSameProduct(products, newProductLink){
+    return new Promise(resolve => {
+        products.forEach(product => {
+            if(product.link == newProductLink){
+                return resolve(true);
+            }
+        });
+        return resolve(false);
+    });
+}
 
 
 // Storage value change listener
 chrome.storage.onChanged.addListener(function(changes, storageName){
-    if(storageName == "sync" && "cp" in changes){
-        var totalItems = Object.keys(JSON.parse(changes.cp.newValue)).length;
+    if(storageName == "sync" && "products" in changes){
+        var totalItems = JSON.parse(changes.products.newValue).new.length;
+        console.log(JSON.parse(changes.products.newValue));
         chrome.browserAction.setBadgeText({ "text": totalItems.toString() });
     }
     

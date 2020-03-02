@@ -4,6 +4,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var helmet = require('helmet');
 var logger = require('morgan');
+var session = require('express-session')
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -12,6 +13,13 @@ var bestbuyRouter = require('./routes/bestbuy');
 var walmartRouter = require('./routes/walmart');
 
 var app = express();
+
+// Initalize session
+app.use(session({
+  secret: 'web scraping ',
+  resave: false,
+  saveUninitialized: true
+}))
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
