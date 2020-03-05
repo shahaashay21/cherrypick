@@ -1,50 +1,53 @@
 {
-    "new":[
-        {
-            "itemId": 8965451,
+  "new": [
+    {
+      "itemId": 8965451,
+      "link": "Item link",
+      "price": 70,
+      "name": "Name of the product",
+      "timestamp": "current time",
+      "suggestions": {
+        "amazon": [
+          {
             "link": "Item link",
-            "price": 70,
+            "price": 85,
             "name": "Name of the product",
-            "timestamp": "current time",
-            "suggestions":{
-                "amazon": [
-                    {
-                        "firstSuggestedItem": "Item link",
-                        "price": 85,
-                        "name": "Name of the product"
-                    },
-                    {
-                        "secondSuggestedItem": "Item link",
-                        "price": 85,
-                        "name": "Name of the product"
-                    }
-                ]
-            }
-        },
-        {
-            "itemId": 4165416,
+            "ratings": 4.8
+          },
+          {
             "link": "Item link",
-            "price": 157,
+            "price": 85,
             "name": "Name of the product",
-            "timestamp": "current time",
-            "suggestions":{
-                "amazon": [
-                    {
-                        "firstSuggestedItem": "Item link",
-                        "price": 145,
-                        "name": "Name of the product"
-                    },
-                    {
-                        "secondSuggestedItem": "Item link",
-                        "price": 149,
-                        "name": "Name of the product"
-                    }
-                ]
-            }
-        }
-    ],
-    "expired":[
-        // Same as new (Max 20)
-
-    ]
+            "ratings": 4.8
+          }
+        ]
+      }
+    },
+    {
+      "itemId": 4165416,
+      "link": "Item link",
+      "price": 157,
+      "name": "Name of the product",
+      "timestamp": "current time",
+      "suggestions": {
+        "amazon": [
+          {
+            "link": "Item link",
+            "price": 145,
+            "name": "Name of the product",
+            "ratings": 4.8
+          },
+          {
+            "link": "Item link",
+            "price": 149,
+            "name": "Name of the product",
+            "ratings": 4.8
+          }
+        ]
+      }
+    }
+  ],
+  "expired": [
+    // Same as new (Max 20)
+  ]
 }

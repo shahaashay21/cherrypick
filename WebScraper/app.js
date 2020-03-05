@@ -36,6 +36,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 app.use('/amazon', amazonRouter);
+app.use('/amzn', amazonRouter);
 app.use('/bestbuy', bestbuyRouter);
 app.use('/walmart', walmartRouter);
 
