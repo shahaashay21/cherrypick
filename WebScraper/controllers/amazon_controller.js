@@ -9,6 +9,7 @@ const productInfo = function(req, res, next){
 
     axios.get(url).then((html) => {
         let $ = cheerio.load(html.data);
+        productInfo['owner'] = "amazon";
         productInfo['price'] = $("#priceblock_ourprice").text();
         productInfo['title'] = $("#productTitle").text();
         productInfo['title'] = productInfo['title'].replace(/\\n/gm, "").trim();

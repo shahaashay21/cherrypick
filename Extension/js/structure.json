@@ -1,53 +1,53 @@
 {
-  "new": [
-    {
-      "itemId": 8965451,
-      "link": "Item link",
-      "price": 70,
-      "name": "Name of the product",
-      "timestamp": "current time",
-      "suggestions": {
-        "amazon": [
-          {
+    "new": {
+        "OWNER::TITLE": {
+            "itemId": 8965451,
+            "owner": "amazon",
             "link": "Item link",
-            "price": 85,
+            "price": 70,
             "name": "Name of the product",
-            "ratings": 4.8
-          },
-          {
+            "timestamp": "current time",
+            "suggestions": {
+                "walmart": [{
+                        "link": "Item link",
+                        "price": 85,
+                        "name": "Name of the product",
+                        "ratings": 4.8
+                    },
+                    {
+                        "link": "Item link",
+                        "price": 85,
+                        "name": "Name of the product",
+                        "ratings": 4.8
+                    }
+                ]
+            }
+        },
+        "OWNER::TITLE": {
+            "itemId": 4165416,
+            "owner": "walmart",
             "link": "Item link",
-            "price": 85,
+            "price": 157,
             "name": "Name of the product",
-            "ratings": 4.8
-          }
-        ]
-      }
+            "timestamp": "current time",
+            "suggestions": {
+                "amazon": [{
+                        "link": "Item link",
+                        "price": 145,
+                        "name": "Name of the product",
+                        "ratings": 4.8
+                    },
+                    {
+                        "link": "Item link",
+                        "price": 149,
+                        "name": "Name of the product",
+                        "ratings": 4.8
+                    }
+                ]
+            }
+        }
     },
-    {
-      "itemId": 4165416,
-      "link": "Item link",
-      "price": 157,
-      "name": "Name of the product",
-      "timestamp": "current time",
-      "suggestions": {
-        "amazon": [
-          {
-            "link": "Item link",
-            "price": 145,
-            "name": "Name of the product",
-            "ratings": 4.8
-          },
-          {
-            "link": "Item link",
-            "price": 149,
-            "name": "Name of the product",
-            "ratings": 4.8
-          }
-        ]
-      }
+    "expired": {
+        // Same as new (Max 20)
     }
-  ],
-  "expired": [
-    // Same as new (Max 20)
-  ]
 }

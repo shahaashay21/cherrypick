@@ -9,6 +9,7 @@ const productInfo = function(req, res, next){
 
     axios.get(url).then((html) => {
         let $ = cheerio.load(html.data);
+        productInfo['owner'] = "walmart";
         productInfo['price'] = $(".product-atf").find(".prod-PriceSection").find(".prod-PriceHero").find(".price-group > .price-characteristic").attr("content");
         productInfo['price'] = productInfo['price'].match(/([0-9]+\.*[0-9]*)/gm)[0].trim();
         productInfo['title'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
