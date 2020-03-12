@@ -14,7 +14,7 @@ chrome.runtime.onInstalled.addListener(function () {
 });
 
 // add context menu (right click on the page)
-var contextMenuItem = {
+let contextMenuItem = {
     id: "cp-compare",
     title: "Compare Price",
     contexts: ["page"]
@@ -28,13 +28,14 @@ chrome.contextMenus.onClicked.addListener(function (clickedData) {
 
 async function newProductListner(clickedData) {
     if (clickedData.menuItemId == "cp-compare") {
-        var pageUrl = clickedData.pageUrl;
+        let pageUrl = clickedData.pageUrl;
         if (validURL(pageUrl) && supportedUrl(pageUrl)) {
             chrome.storage.sync.set({
                 lastAccessed: Date.now()
             });
             await addPendingProduct(pageUrl);
-            await addProduct(pageUrl);
+            // await addProduct(pageUrl);
+            getProductDetails();
         } else {
             alert("Current URL is not supported: " + pageUrl);
         }
@@ -74,7 +75,7 @@ function addProduct(link, price = null, name = null, suggestions = null) {
                         console.log(productInfo);
                         if (typeof productInfo.error != "undefined" && productInfo.error == 0) {
                             productInfo = productInfo.productInfo;
-                            var newProduct = {};
+                            let newProduct = {};
                             newProduct["owner"] = productInfo.owner;
                             newProduct["link"] = productInfo.url;
                             newProduct["ratings"] = productInfo.ratings;
@@ -120,9 +121,19 @@ function addProduct(link, price = null, name = null, suggestions = null) {
     });
 }
 
+function getProductDetails(){
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+        chrome.tabs.sendMessage(tabs[0].id, {action: "getProductDetails"}, function(response) {
+            console.log("Got the product details to add to extension");
+            console.log(response);
+            addProductDetails(response);
+        });  
+    });
+}
+
 function removePendingProduct(products, productLink){
     return new Promise(resolve => {
-        for(var i = 0; i < products.pending.length; i++){
+        for(let i = 0; i < products.pending.length; i++){
             if(products.pending[i] == productLink){
                 products.pending.splice(i, 1);
             }
@@ -136,8 +147,8 @@ function removePendingProduct(products, productLink){
 // Storage value change listener, update products count badge of extension
 chrome.storage.onChanged.addListener(function (changes, storageName) {
     if (storageName == "sync" && "products" in changes) {
-        var products = JSON.parse(changes.products.newValue);
-        var totalItems = products.new.length + products.pending.length;
+        let products = JSON.parse(changes.products.newValue);
+        let totalItems = products.new.length + products.pending.length;
         console.log(products);
         chrome.browserAction.setBadgeText({
             text: totalItems.toString()
@@ -199,7 +210,47 @@ function drawProducts() {
 
 
 chrome.runtime.onMessage.addListener(function (request, sender) {
-    if (request.action == "getSource") {
+    if (request.action == "initialProductInfo") {
+        console.log("Initial Product Info");
         console.log(request.source);
     }
 });
+
+function addProductDetails(productInfo){
+    return new Promise(resolve => {
+        chrome.storage.sync.get(["products"], async function (chromeData) {
+            let products = JSON.parse(chromeData.products);
+            if (typeof productInfo != "undefined" && typeof productInfo.error != "undefined" && productInfo.error == 0) {
+                productInfo = productInfo.productInfo;
+                let newProduct = {};
+                newProduct["owner"] = productInfo.owner;
+                newProduct["link"] = productInfo.url;
+                newProduct["ratings"] = productInfo.ratings;
+                newProduct["price"] = productInfo.price;
+                newProduct["name"] = productInfo.title;
+                newProduct["timestamp"] = Date.now();
+                let sameProduct = await isSameProduct(products, newProduct);
+                if (sameProduct.isAvailable) {
+                    products.new.splice(sameProduct.position, 1);
+                }
+                products["new"].push(newProduct);
+                products.new.sort(function (a, b) { return b["timestamp"] - a["timestamp"] });
+                chrome.storage.sync.set({ products: JSON.stringify(products) }, async () => {
+                    await removePendingProduct(products, productInfo.url);
+                    drawProducts();
+                    if (sameProduct.isAvailable) {
+                        console.log(`Product is already added to Cherry Pick: ${productInfo.url} `);
+                    }
+                    return resolve();
+                });
+            } else {
+                if(typeof productInfo != "undefined" &&productInfo.error == 1){
+                    console.log(productInfo.message);
+                } else {
+                    console.log("Couldn't get the product information");
+                }
+                return resolve();
+            }
+        });
+    });
+}

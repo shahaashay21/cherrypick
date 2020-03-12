@@ -1,10 +1,11 @@
+let finalData;
 console.log("jQuery");
 $(document).ready(function(){
     console.log($);
 });
 
 function DOMtoString(document_root) {
-    var html = '',
+    let html = '',
         node = document_root.firstChild;
     while (node) {
         switch (node.nodeType) {
@@ -31,22 +32,29 @@ function DOMtoString(document_root) {
 }
 
 async function readDom(){
-    let finalData = await webscrap();
-    console.log("Final DATA");
-    console.log(finalData);
+    finalData = await webscrap();
     chrome.runtime.sendMessage({
-        action: "getSource",
+        action: "initialProductInfo",
         source: finalData
     });
 }
+
+chrome.runtime.onMessage.addListener(async function (request, sender, callback) {
+    if (request.action == "getProductDetails") {
+        console.log("FINAL DATA");
+        console.log(finalData);
+        if(!finalData) finalData = await webscrap();
+        callback(finalData);
+    }
+});
 
 window.onload = readDom;
 
 function webscrap(){
     return new Promise(async(resolve) => {
-        var owner = getAPIPath(location.href);
-        var productInfo = {};
-        var DOM = DOMtoString(document);
+        let owner = getAPIPath(location.href);
+        let productInfo = {};
+        // let DOM = DOMtoString(document);
         switch(owner){
             case "amzn":
             case "amazon":
@@ -60,6 +68,8 @@ function webscrap(){
                 break;
             default:
                 console.log("Current website is not supported yet");
+                productInfo["error"] = 1;
+                productInfo["message"] = "Current website is not supported yet";
         }
         resolve(productInfo);
     })
