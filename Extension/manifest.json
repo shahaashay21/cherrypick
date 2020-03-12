@@ -15,14 +15,13 @@
   "options_page": "html/options.html",
   "background": {
     "page": "html/popup.html",
-    // "scripts": ["js/jquery-3.4.1.min.js", "js/eventPage.js"],
     "persistent": false
   },
   "content_scripts": [
     {
-      "js": ["js/eventPage.js"],
-      "matches": ["http://*/*", "https://*/*"]
+      "js": ["js/jquery-3.4.1.min.js", "js/helper.js", "js/webscrape.js"],
+      "matches": ["<all_urls>"]
     }
   ],
-  "permissions": ["storage", "notifications", "contextMenus", "identity"]
+  "permissions": ["storage", "notifications", "contextMenus"]
 }

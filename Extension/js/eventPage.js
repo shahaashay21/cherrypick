@@ -1,11 +1,11 @@
 const URL = "http://localhost:3000/";
-const supportedSites = ["amazon", "amzn", "bestbuy", "walmart"]; // Has to be 1
 // Initalize
 let productInitialization = {
-    new: {},
-    expired: {}
+    new: new Array(),
+    pending: new Array(),
+    expired: new Array()
 };
-chrome.runtime.onInstalled.addListener(function() {
+chrome.runtime.onInstalled.addListener(function () {
     console.log("Welcome to Cherry-Pick");
     chrome.storage.sync.set({
         products: JSON.stringify(productInitialization),
@@ -22,7 +22,7 @@ var contextMenuItem = {
 chrome.contextMenus.create(contextMenuItem);
 
 // Context menu listener
-chrome.contextMenus.onClicked.addListener(function(clickedData) {
+chrome.contextMenus.onClicked.addListener(function (clickedData) {
     newProductListner(clickedData);
 });
 
@@ -33,6 +33,7 @@ async function newProductListner(clickedData) {
             chrome.storage.sync.set({
                 lastAccessed: Date.now()
             });
+            await addPendingProduct(pageUrl);
             await addProduct(pageUrl);
         } else {
             alert("Current URL is not supported: " + pageUrl);
@@ -40,54 +41,77 @@ async function newProductListner(clickedData) {
     }
 }
 
-function getAPIPath(url) {
-    var regEx = "www.(";
-    supportedSites.forEach(site => {
-        regEx += `${site}|`;
+function addPendingProduct(link) {
+    return new Promise(resolve => {
+        chrome.storage.sync.get(["products"], function (chromeData) {
+            products = JSON.parse(chromeData.products);
+            if (!products.pending.includes(link)) {
+                products["pending"].push(link);
+                chrome.storage.sync.set({ products: JSON.stringify(products) }, () => {
+                    drawProducts();
+                });
+            }
+        });
+        return resolve();
     });
-    regEx = regEx.slice(0, -1);
-    regEx += ").";
-    let match = new RegExp(regEx, "gmi").exec(url);
-    if (match && match.length > 1) {
-        return match[1];
-    }
 }
 
-function addProduct(link, price = null, name = null, suggestions = null, done) {
+function addProduct(link, price = null, name = null, suggestions = null) {
     return new Promise(resolve => {
-        chrome.storage.sync.get(["products"], function(chromeData) {
+        chrome.storage.sync.get(["products"], function (chromeData) {
             products = JSON.parse(chromeData.products);
             let path = getAPIPath(link);
+            console.log(path);
             if (path) {
                 console.log("Sending request to get product information");
                 $.ajax({
-                    url: URL + getAPIPath(link) + "?url=" + link,
-                    success: async function(productInfo) {
+                    url: URL + path + "?url=" + link,
+                    timeout: 6000,
+                    tryCount: 0,
+                    retryLimit: 2,
+                    success: async function (productInfo) {
                         console.log("Got the reply");
                         console.log(productInfo);
                         if (typeof productInfo.error != "undefined" && productInfo.error == 0) {
                             productInfo = productInfo.productInfo;
-                            var productKey = `${productInfo.owner}::${productInfo.title}`;
-                            let sameProduct = await isSameProduct(products, productKey);
-                            var product = {};
-                            product["owner"] = productInfo.owner;
-                            product["link"] = productInfo.url;
-                            product["ratings"] = productInfo.ratings;
-                            product["price"] = productInfo.price;
-                            product["name"] = productInfo.title;
-                            product["timestamp"] = Date.now();
-                            products["new"][productKey] = product;
-                            chrome.storage.sync.set({
-                                products: JSON.stringify(products)
-                            }, () => {
+                            var newProduct = {};
+                            newProduct["owner"] = productInfo.owner;
+                            newProduct["link"] = productInfo.url;
+                            newProduct["ratings"] = productInfo.ratings;
+                            newProduct["price"] = productInfo.price;
+                            newProduct["name"] = productInfo.title;
+                            newProduct["timestamp"] = Date.now();
+                            let sameProduct = await isSameProduct(products, newProduct);
+                            if (sameProduct.isAvailable) {
+                                products.new.splice(sameProduct.position, 1);
+                            }
+                            products["new"].push(newProduct);
+                            products.new.sort(function (a, b) { return b["timestamp"] - a["timestamp"] });
+                            chrome.storage.sync.set({ products: JSON.stringify(products) }, async () => {
+                                await removePendingProduct(products, link);
                                 drawProducts();
-                                if (sameProduct) {
-                                    alert("Product is already added to track");
+                                if (sameProduct.isAvailable) {
+                                    console.log(`Product is already added to Cherry Pick: ${link} `);
                                 }
                                 return resolve();
                             });
                         }
-                    }
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        if (textStatus == 'timeout') {
+                            this.tryCount++;
+                            if (this.tryCount <= this.retryLimit) {
+                                //try again
+                                console.log(`Remaining Retry: ${this.retryLimit - 1}`);
+                                $.ajax(this);
+                                return;
+                            } else {
+                                alert(`Failed to add an item. Please try again: ${link}`);
+                                console.log("AJAX time out");
+                            }
+                            return;
+                        }
+                    },
                 });
             } else {
                 alert("Not supported right now :(")
@@ -96,25 +120,25 @@ function addProduct(link, price = null, name = null, suggestions = null, done) {
     });
 }
 
-function isSameProduct(products, newProductKey) {
+function removePendingProduct(products, productLink){
     return new Promise(resolve => {
-        if (products.new) {
-            let productKeys = Object.keys(products.new)
-            productKeys.forEach(productKey => {
-                if (productKey == newProductKey) {
-                    return resolve(true);
-                }
-            });
+        for(var i = 0; i < products.pending.length; i++){
+            if(products.pending[i] == productLink){
+                products.pending.splice(i, 1);
+            }
         }
-        return resolve(false);
+        chrome.storage.sync.set({ products: JSON.stringify(products) }, () => {
+            return resolve();
+        });
     });
 }
 
-// Storage value change listener
-chrome.storage.onChanged.addListener(function(changes, storageName) {
+// Storage value change listener, update products count badge of extension
+chrome.storage.onChanged.addListener(function (changes, storageName) {
     if (storageName == "sync" && "products" in changes) {
-        var totalItems = Object.keys(JSON.parse(changes.products.newValue).new).length;
-        console.log(JSON.parse(changes.products.newValue));
+        var products = JSON.parse(changes.products.newValue);
+        var totalItems = products.new.length + products.pending.length;
+        console.log(products);
         chrome.browserAction.setBadgeText({
             text: totalItems.toString()
         });
@@ -122,39 +146,60 @@ chrome.storage.onChanged.addListener(function(changes, storageName) {
 });
 
 function drawProducts() {
-    chrome.storage.sync.get(["products"], async function(chromeData) {
+    chrome.storage.sync.get(["products"], async function (chromeData) {
         if (chromeData.products) {
             products = JSON.parse(chromeData.products);
             if (products.new) {
                 for (productKey in products.new) {
                     product = products.new[productKey];
-                    if (product.name && product.price) {
+                    if (product && product.name) {
                         newProduct =
                             `<li class="media" style="height: 85px; cursor: pointer;">` +
                             `<img src="https://www.w3schools.com/images/w3schools_green.jpg" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="...">` +
                             `<div class="media-body">` +
                             `<p class="ellipses p-title" class="mt-0 mb-1">${product.name}</p>` +
                             `<p class="ellipses">${product.name}</p>` +
-                            `<p class="ellipses p-price">` +
-                            `Price: <p class="p-amount">${product.price}</p>` +
-                            `</p>` +
+                            `<p class="ellipses p-price">`;
+                        if (product.price && product.price != -1) {
+                            newProduct += `Price: <p class="p-amount">${product.price}</p>`;
+                        } else {
+                            newProduct += `Price: <p class="p-amount">Not available</p>`;
+                        }
+                        newProduct += `</p>` +
                             `</div>` +
                             `</li>`;
                         $("#products").append(newProduct);
                     }
                 };
             }
+            if (products.pending) {
+                for (productKey in products.pending) {
+                    productLink = products.pending[productKey];
+                    if (productLink) {
+                        newProduct =
+                            `<li class="media" style="height: 85px; cursor: pointer;">` +
+                            `<img src="#" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="...">` +
+                            `<div class="media-body">` +
+                            `<p class="ellipses p-title" class="mt-0 mb-1">${productLink}</p>` +
+                            `<p class="ellipses">Processing</p>` +
+                            `<p class="ellipses p-price">`;
+                        newProduct += `Price: <p class="p-amount">Not available</p>`;
+                        newProduct += `</p>` +
+                            `</div>` +
+                            `</li>`;
+                        $("#products").append(newProduct);
+                    }
+                };
+
+            }
         }
     });
 }
 
-///////////////// HELPER /////////////////
-function validURL(myURL) {
-    var pattern = /[-a-zA-Z0-9@:%_\+.~#?&\/=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&\/=]*)?/gim;
-    return pattern.test(myURL);
-}
 
-function supportedUrl(myURL) {
-    var supportedRegEx = /((amazon|amzn)\.com|walmart\.com|bestbuy\.com)/gim;
-    return supportedRegEx.test(myURL);
-}
+
+chrome.runtime.onMessage.addListener(function (request, sender) {
+    if (request.action == "getSource") {
+        console.log(request.source);
+    }
+});

@@ -7,14 +7,22 @@ const productInfo = function(req, res, next){
     let productInfo = {};
     let response = {};
 
+    const start = Date.now();
     axios.get(url).then((html) => {
+        const takenTime = Date.now() - start;
+        logger.info(`Time taken to get Bestbuy information: ${takenTime} and URL: ${url}`);
         let $ = cheerio.load(html.data);
         productInfo['owner'] = "bestbuy";
         productInfo['price'] = $(".pricing-price.priceView-price").find(".priceView-hero-price.priceView-customer-price > span").first().text();
-        productInfo['price'] = productInfo['price'].match(/([0-9]+\.*[0-9]*)/gm)[0].trim();
+        if(productInfo['price']){
+            productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/gm)[0].trim();
+            productInfo['price'] = productInfo['price'].replace(",","");
+        } else {
+            productInfo['price'] = -1;
+        }
+        logger.info(productInfo['price']);
         productInfo['title'] = $(".sku-title > h1").text().replace(/\\n/gm, "").trim();
         productInfo['ratings'] = $(".popover-wrapper").find(".c-reviews").find(".c-review-average").text().trim();
-        logger.info(productInfo['ratings']);
         productInfo['url'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;

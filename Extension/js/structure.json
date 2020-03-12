@@ -1,14 +1,15 @@
 {
-    "new": {
-        "OWNER::TITLE": {
+    "new": [
+        {
             "itemId": 8965451,
             "owner": "amazon",
             "link": "Item link",
             "price": 70,
             "name": "Name of the product",
-            "timestamp": "current time",
+            "timestamp": "5",
             "suggestions": {
-                "walmart": [{
+                "walmart": [
+                    {
                         "link": "Item link",
                         "price": 85,
                         "name": "Name of the product",
@@ -23,15 +24,16 @@
                 ]
             }
         },
-        "OWNER::TITLE": {
+        {
             "itemId": 4165416,
             "owner": "walmart",
             "link": "Item link",
             "price": 157,
             "name": "Name of the product",
-            "timestamp": "current time",
+            "timestamp": "4",
             "suggestions": {
-                "amazon": [{
+                "amazon": [
+                    {
                         "link": "Item link",
                         "price": 145,
                         "name": "Name of the product",
@@ -46,8 +48,8 @@
                 ]
             }
         }
-    },
-    "expired": {
+    ],
+    "expired": [
         // Same as new (Max 20)
-    }
+    ]
 }

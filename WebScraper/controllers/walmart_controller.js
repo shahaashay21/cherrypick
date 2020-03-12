@@ -7,11 +7,19 @@ const productInfo = function(req, res, next){
     let productInfo = {};
     let response = {};
 
+    const start = Date.now();
     axios.get(url).then((html) => {
+        const takenTime = Date.now() - start;
+        logger.info(`Time taken to get Walmart information: ${takenTime} and URL: ${url}`);
         let $ = cheerio.load(html.data);
         productInfo['owner'] = "walmart";
         productInfo['price'] = $(".product-atf").find(".prod-PriceSection").find(".prod-PriceHero").find(".price-group > .price-characteristic").attr("content");
-        productInfo['price'] = productInfo['price'].match(/([0-9]+\.*[0-9]*)/gm)[0].trim();
+        if(productInfo['price']){
+            productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/gm)[0].trim();
+            productInfo['price'] = productInfo['price'].replace(",","");
+        } else {
+            productInfo['price'] = -1;
+        }
         productInfo['title'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
         productInfo['ratings'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=ratingValue]`).text().trim();
         productInfo['reviews'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=reviewCount]`).text().trim();
