@@ -6,7 +6,11 @@ function isSameProduct(products, newProduct) {
         if (products.new) {
             var i = 0;
             products.new.forEach(product => {
-                if (product.owner == newProduct.owner && product.link == newProduct.link) {
+                console.log("ALREADY PRODUCT");
+                console.log(product);
+                console.log("NEW PRODUCT");
+                console.log(newProduct);
+                if (product.owner == newProduct.owner && product.name == newProduct.name) {
                     return resolve({'isAvailable': true, 'position': i});
                 }
                 i++;

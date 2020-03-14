@@ -7,7 +7,7 @@ const loadtest = require('loadtest');
 describe('Unit tests', function() {
 
   // 50 Seconds
-  const requestTimeOut = 0;
+  const requestTimeOut = 50000;
   this.timeout(requestTimeOut);
 
   this.afterAll(function(){
@@ -35,11 +35,11 @@ describe('Unit tests', function() {
           console.log('Request loadtest() instance index: ', result.instanceIndex);
       }
       const options = {
-        url: 'http://localhost:3000/amazon/products/Acer%20SB220Q%20bi%2021.5%20inches%20Full%20HD%20(1920%20x%201080)%20IPS%20Ultra-Thin%20Zero%20Frame%20Monitor%20(HDMI%20&%20VGA%20port)',
-        // url: 'http://localhost:3000/walmart/products/airpod%20charging%20case',
+        // url: 'http://localhost:3000/amazon/products/Acer%20SB220Q%20bi%2021.5%20inches%20Full%20HD%20(1920%20x%201080)%20IPS%20Ultra-Thin%20Zero%20Frame%20Monitor%20(HDMI%20&%20VGA%20port)',
+        url: 'http://localhost:3000/walmart/products/airpod%20charging%20case',
         maxRequests: maxRequests,
         requestsPerSecond: requestsPerSecond,
-        timeout: requestTimeOut,
+        // timeout: requestTimeOut,
         // statusCallback: statusCallback
       };
 
@@ -67,11 +67,11 @@ describe('Unit tests', function() {
       });
     });
 
-    it('should return 4 product information ', function(done) {
+    it('should return 5 product information ', function(done) {
       request(url + "/amazon?url=https://www.amazon.com/gp/product/B07CVL2D2S" , function(error, response, body) {
         body = JSON.parse(body);
         if(body.error == 0){
-          expect(Object.keys(body.productInfo).length).to.equal(4);
+          expect(Object.keys(body.productInfo).length).to.equal(5);
           done();
         } else {
           done(body.message);
@@ -103,11 +103,11 @@ describe('Unit tests', function() {
       });
     });
 
-    it('should return 4 product information ', function(done) {
+    it('should return 5 product information ', function(done) {
       request(url + "/bestbuy?url=https://www.bestbuy.com/site/apple-airpods-wireless-charging-case-white/6296120.p?skuId=6296120" , function(error, response, body) {
         body = JSON.parse(body);
         if(body.error == 0){
-          expect(Object.keys(body.productInfo).length).to.equal(4);
+          expect(Object.keys(body.productInfo).length).to.equal(5);
           done();
         } else {
           done(body.message);
@@ -139,11 +139,11 @@ describe('Unit tests', function() {
       });
     });
 
-    it('should return 5 product information ', function(done) {
+    it('should return 6 product information ', function(done) {
       request(url + "/walmart?url=https://www.walmart.com/ip/Wireless-Charging-Case-for-AirPods/910249719" , function(error, response, body) {
         body = JSON.parse(body);
         if(body.error == 0){
-          expect(Object.keys(body.productInfo).length).to.equal(5);
+          expect(Object.keys(body.productInfo).length).to.equal(6);
           done();
         } else {
           done(body.message);
