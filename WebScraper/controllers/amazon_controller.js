@@ -12,15 +12,19 @@ const productInfo = function(req, res, next){
         const takenTime = Date.now() - start;
         logger.info(`Time taken to get Amazon information: ${takenTime} and URL: ${url}`);
         let $ = cheerio.load(html.data);
+
         productInfo['owner'] = "amazon";
         productInfo['price'] = $("#priceblock_ourprice").text();
         productInfo['price'] = productInfo['price'].replace(",","");
         productInfo['title'] = $("#productTitle").text();
         productInfo['title'] = productInfo['title'].replace(/\\n/gm, "").trim();
-        productInfo['ratings'] = $(".reviewCountTextLinkedHistogram").attr("title").match(/(^[0-9]*\.*[0-9]*)\s/gm)[0].trim();
+        if($(".reviewCountTextLinkedHistogram").attr("title")){
+            productInfo['ratings'] = $(".reviewCountTextLinkedHistogram").attr("title").match(/(^[0-9]*\.*[0-9]*)\s/gm)[0].trim();
+        }
         productInfo['url'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;
+
         res.json(response);
     }).catch (function (e) {
         logger.error(e.message);

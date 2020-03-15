@@ -23,7 +23,7 @@ describe('Unit tests', function() {
   
 
   // performance testing
-  describe('Performance', function(){
+  describe.skip('Performance', function(){
     const maxRequests = 100;
     const requestsPerSecond = 100;
     it(`should perform ${requestsPerSecond} requests per hour`, function(done){

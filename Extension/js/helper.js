@@ -3,13 +3,9 @@ const supportedSites = ["amazon", "amzn", "bestbuy", "walmart"];
 
 function isSameProduct(products, newProduct) {
     return new Promise(resolve => {
-        if (products.new) {
+        if (products) {
             var i = 0;
-            products.new.forEach(product => {
-                console.log("ALREADY PRODUCT");
-                console.log(product);
-                console.log("NEW PRODUCT");
-                console.log(newProduct);
+            products.forEach(product => {
                 if (product.owner == newProduct.owner && product.name == newProduct.name) {
                     return resolve({'isAvailable': true, 'position': i});
                 }

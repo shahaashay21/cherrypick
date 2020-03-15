@@ -1,15 +1,24 @@
+drawProducts();
 const URL = "http://localhost:3000/";
 // Initalize
 let productInitialization = {
-    new: new Array(),
-    pending: new Array(),
-    expired: new Array()
+    recent: new Array(),
+    saved: new Array(),
+    expired: new Array(),
+    pending: new Array()
 };
+
+let defaultOptions = {
+    maxDefaultRecentProducts: 10
+}
+
+// Runs once in a lifetime when cherry pick is installed
 chrome.runtime.onInstalled.addListener(function () {
     console.log("Welcome to Cherry-Pick");
     chrome.storage.sync.set({
         products: JSON.stringify(productInitialization),
-        lastAccessed: Date.now()
+        lastAccessed: Date.now(),
+        defaultOptions: JSON.stringify(defaultOptions)
     });
 });
 
@@ -48,7 +57,7 @@ function addNewProduct(){
         chrome.tabs.sendMessage(tabs[0].id, {action: "getProductDetails"}, function(response) {
             console.log("Got the product details to add to extension");
             console.log(response);
-            addProductDetails(response);
+            addProductDetails(response, "saved");
         });  
     });
 }
@@ -85,8 +94,7 @@ function removePendingProduct(products, productLink){
 chrome.storage.onChanged.addListener(function (changes, storageName) {
     if (storageName == "sync" && "products" in changes) {
         let products = JSON.parse(changes.products.newValue);
-        let totalItems = products.new.length;
-        console.log(products);
+        let totalItems = products.saved.length;
         drawProducts();
         chrome.browserAction.setBadgeText({
             text: totalItems.toString()
@@ -94,13 +102,14 @@ chrome.storage.onChanged.addListener(function (changes, storageName) {
     }
 });
 
+// List all the products in the extension HTML page
 function drawProducts() {
     chrome.storage.sync.get(["products"], async function (chromeData) {
         if (chromeData.products) {
             products = JSON.parse(chromeData.products);
-            if (products.new) {
-                for (productKey in products.new) {
-                    product = products.new[productKey];
+            if (products.saved) {
+                for (productKey in products.saved) {
+                    product = products.saved[productKey];
                     if (product && product.name) {
                         newProduct =
                             `<li class="media" style="height: 85px; cursor: pointer;">` +
@@ -146,11 +155,13 @@ function drawProducts() {
     });
 }
 
-function addProductDetails(productInfo){
+// Add a new product to an extension and update it if the product is already available
+function addProductDetails(productInfo, infoType){
     return new Promise(resolve => {
-        chrome.storage.sync.get(["products"], async function (chromeData) {
+        chrome.storage.sync.get(["products", "defaultOptions"], async function (chromeData) {
             let products = JSON.parse(chromeData.products);
-            if (typeof productInfo != "undefined" && typeof productInfo.error != "undefined" && productInfo.error == 0) {
+            let defaultOptions = JSON.parse(chromeData.defaultOptions);
+            if (typeof productInfo != "undefined" && typeof productInfo.error != "undefined" && productInfo.error == 0 && productInfo.productInfo.title) {
                 productInfo = productInfo.productInfo;
                 let newProduct = {};
                 newProduct["owner"] = productInfo.owner;
@@ -159,12 +170,17 @@ function addProductDetails(productInfo){
                 newProduct["price"] = productInfo.price;
                 newProduct["name"] = productInfo.title;
                 newProduct["timestamp"] = Date.now();
-                let sameProduct = await isSameProduct(products, newProduct);
+                let sameProduct = await isSameProduct(products[infoType], newProduct);
                 if (sameProduct.isAvailable) {
-                    products.new.splice(sameProduct.position, 1);
+                    products[infoType].splice(sameProduct.position, 1);
                 }
-                products["new"].push(newProduct);
-                products.new.sort(function (a, b) { return b["timestamp"] - a["timestamp"] });
+                products[infoType].push(newProduct);
+                products[infoType].sort(function (a, b) { return b["timestamp"] - a["timestamp"] });
+                if(infoType == "recent"){
+                    if(products[infoType].length > defaultOptions.maxDefaultRecentProducts){
+                        products[infoType].splice(products[infoType].length - 1, 1);
+                    }
+                }
                 chrome.storage.sync.set({ products: JSON.stringify(products) }, async () => {
                     await removePendingProduct(products, productInfo.url);
                     if (sameProduct.isAvailable) {
@@ -190,5 +206,6 @@ chrome.runtime.onMessage.addListener(function (request, sender) {
     if (request.action == "initialProductInfo") {
         console.log("Initial Product Info");
         console.log(request.source);
+        addProductDetails(request.source, "recent");
     }
 });

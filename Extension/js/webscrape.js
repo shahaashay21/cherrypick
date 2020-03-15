@@ -4,33 +4,6 @@ $(document).ready(function(){
     console.log($);
 });
 
-function DOMtoString(document_root) {
-    let html = '',
-        node = document_root.firstChild;
-    while (node) {
-        switch (node.nodeType) {
-        case Node.ELEMENT_NODE:
-            html += node.outerHTML;
-            break;
-        case Node.TEXT_NODE:
-            html += node.nodeValue;
-            break;
-        case Node.CDATA_SECTION_NODE:
-            html += '<![CDATA[' + node.nodeValue + ']]>';
-            break;
-        case Node.COMMENT_NODE:
-            html += '<!--' + node.nodeValue + '-->';
-            break;
-        case Node.DOCUMENT_TYPE_NODE:
-            // (X)HTML documents are identified by public identifiers
-            html += "<!DOCTYPE " + node.name + (node.publicId ? ' PUBLIC "' + node.publicId + '"' : '') + (!node.publicId && node.systemId ? ' SYSTEM' : '') + (node.systemId ? ' "' + node.systemId + '"' : '') + '>\n';
-            break;
-        }
-        node = node.nextSibling;
-    }
-    return html;
-}
-
 async function readDom(){
     finalData = await webscrap();
     chrome.runtime.sendMessage({
@@ -41,8 +14,6 @@ async function readDom(){
 
 chrome.runtime.onMessage.addListener(async function (request, sender, callback) {
     if (request.action == "getProductDetails") {
-        console.log("FINAL DATA");
-        console.log(finalData);
         if(!finalData) finalData = await webscrap();
         callback(finalData);
     }
@@ -54,7 +25,6 @@ function webscrap(){
     return new Promise(async(resolve) => {
         let owner = getAPIPath(location.href);
         let productInfo = {};
-        // let DOM = DOMtoString(document);
         switch(owner){
             case "amzn":
             case "amazon":
@@ -79,6 +49,7 @@ function getAmazonProduct(){
     return new Promise(resolve => {
         let productInfo = {};
         let response = {};
+        let url = location.href;
 
         productInfo['owner'] = "amazon";
         productInfo['price'] = $("#priceblock_ourprice").text();
@@ -88,7 +59,7 @@ function getAmazonProduct(){
         if($(".reviewCountTextLinkedHistogram").attr("title")){
             productInfo['ratings'] = $(".reviewCountTextLinkedHistogram").attr("title").match(/(^[0-9]*\.*[0-9]*)\s/gm)[0].trim();
         }
-        productInfo['url'] = location.href;
+        productInfo['url'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;
 
@@ -100,6 +71,7 @@ function getWalmartProduct(){
     return new Promise(resolve => {
         let productInfo = {};
         let response = {};
+        let url = location.href;
 
         productInfo['owner'] = "walmart";
         productInfo['price'] = $(".product-atf").find(".prod-PriceSection").find(".prod-PriceHero").find(".price-group > .price-characteristic").attr("content");
@@ -112,7 +84,7 @@ function getWalmartProduct(){
         productInfo['title'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
         productInfo['ratings'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=ratingValue]`).text().trim();
         productInfo['reviews'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=reviewCount]`).text().trim();
-        productInfo['url'] = location.href;
+        productInfo['url'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;
 
@@ -124,6 +96,7 @@ function getBestbuyProduct(){
     return new Promise(resolve => {
         let productInfo = {};
         let response = {};
+        let url = location.href;
 
         productInfo['owner'] = "bestbuy";
         productInfo['price'] = $(".pricing-price.priceView-price").find(".priceView-hero-price.priceView-customer-price > span").first().text();
@@ -135,7 +108,7 @@ function getBestbuyProduct(){
         }
         productInfo['title'] = $(".sku-title > h1").text().replace(/\\n/gm, "").trim();
         productInfo['ratings'] = $(".popover-wrapper").find(".c-reviews").find(".c-review-average").text().trim();
-        productInfo['url'] = location.href;
+        productInfo['url'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;
 

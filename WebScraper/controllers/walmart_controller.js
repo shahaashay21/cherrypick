@@ -12,6 +12,7 @@ const productInfo = function(req, res, next){
         const takenTime = Date.now() - start;
         logger.info(`Time taken to get Walmart information: ${takenTime} and URL: ${url}`);
         let $ = cheerio.load(html.data);
+
         productInfo['owner'] = "walmart";
         productInfo['price'] = $(".product-atf").find(".prod-PriceSection").find(".prod-PriceHero").find(".price-group > .price-characteristic").attr("content");
         if(productInfo['price']){
@@ -26,6 +27,7 @@ const productInfo = function(req, res, next){
         productInfo['url'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;
+        
         res.json(response);
     }).catch (function (e) {
         logger.error(e.message);
