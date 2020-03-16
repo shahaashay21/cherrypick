@@ -15,12 +15,18 @@ const productInfo = function(req, res, next){
 
         productInfo['owner'] = "amazon";
         productInfo['price'] = $("#priceblock_ourprice").text();
-        productInfo['price'] = productInfo['price'].replace(",","");
+        if(productInfo['price']){
+            productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/)[0].trim();
+            productInfo['price'] = productInfo['price'].replace(",","");
+        } else {
+            productInfo['price'] = -1;
+        }
         productInfo['title'] = $("#productTitle").text();
         productInfo['title'] = productInfo['title'].replace(/\\n/gm, "").trim();
         if($(".reviewCountTextLinkedHistogram").attr("title")){
             productInfo['ratings'] = $(".reviewCountTextLinkedHistogram").attr("title").match(/(^[0-9]*\.*[0-9]*)\s/gm)[0].trim();
         }
+        productInfo['img'] = $("#imageBlock_feature_div").find("#altImages").find(".item.imageThumbnail").find("img").attr("src");
         productInfo['url'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;

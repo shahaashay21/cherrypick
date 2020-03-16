@@ -16,7 +16,7 @@ const productInfo = function(req, res, next){
         productInfo['owner'] = "walmart";
         productInfo['price'] = $(".product-atf").find(".prod-PriceSection").find(".prod-PriceHero").find(".price-group > .price-characteristic").attr("content");
         if(productInfo['price']){
-            productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/gm)[0].trim();
+            productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/)[0].trim();
             productInfo['price'] = productInfo['price'].replace(",","");
         } else {
             productInfo['price'] = -1;
@@ -24,10 +24,11 @@ const productInfo = function(req, res, next){
         productInfo['title'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
         productInfo['ratings'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=ratingValue]`).text().trim();
         productInfo['reviews'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=reviewCount]`).text().trim();
+        productInfo['img'] = "https:" + $(".prod-alt-image-wrapper").find(".slider-list").find("li").find("img").attr("src");
         productInfo['url'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;
-        
+
         res.json(response);
     }).catch (function (e) {
         logger.error(e.message);

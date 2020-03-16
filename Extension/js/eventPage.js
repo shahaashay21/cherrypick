@@ -121,7 +121,11 @@ function drawProducts() {
                         let product = products[infoType][productKey];
                         if (product && product.name) {
 
-                            if (!product.price || product.price == -1) product.price = `Not available`;
+                            if (!product.price || product.price == -1){
+                                product.price = `Not available`;
+                            } else {
+                                product.price = `$${product.price}`;
+                            }
                             if (!product.ratings) product.ratings = `Not available`;
                             if (!product.img) product.img = `../icons/img-not-available.png`;
 

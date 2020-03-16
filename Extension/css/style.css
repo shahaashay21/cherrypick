@@ -3,6 +3,27 @@ body {
     font-family: "Varela";
 }
 
+/* Scroll bar */
+.cp-left-body::-webkit-scrollbar-track
+{
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+	border-radius: 4px;
+	background-color: #F5F5F5;
+}
+
+.cp-left-body::-webkit-scrollbar
+{
+	width: 6px;
+	background-color: #F5F5F5;
+}
+
+.cp-left-body::-webkit-scrollbar-thumb
+{
+	border-radius: 4px;
+	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
+	background-color: #DB2E2E;
+}
+
 .cp-header {
     top: 0;
     left: 0;
@@ -38,7 +59,7 @@ body {
 }
 
 .cp-left-body {
-    width: 235px;
+    width: 245px;
     float: left;
     box-shadow: 6px 0px 4px -4px rgba(0, 0, 0, 0.25);
     height: 400px;

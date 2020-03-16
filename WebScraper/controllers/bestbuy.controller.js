@@ -16,13 +16,14 @@ const productInfo = function(req, res, next){
         productInfo['owner'] = "bestbuy";
         productInfo['price'] = $(".pricing-price.priceView-price").find(".priceView-hero-price.priceView-customer-price > span").first().text();
         if(productInfo['price']){
-            productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/gm)[0].trim();
+            productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/)[0].trim();
             productInfo['price'] = productInfo['price'].replace(",","");
         } else {
             productInfo['price'] = -1;
         }
         productInfo['title'] = $(".sku-title > h1").text().replace(/\\n/gm, "").trim();
         productInfo['ratings'] = $(".popover-wrapper").find(".c-reviews").find(".c-review-average").text().trim();
+        productInfo['img'] = $(".shop-media-gallery").find(".thumbnail-list").find(".image-thumbnail").find("img").attr("src");
         productInfo['url'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;

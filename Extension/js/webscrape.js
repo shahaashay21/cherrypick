@@ -25,10 +25,14 @@ if(document.hidden){
     document.addEventListener('visibilitychange', function(e) {
         var hidden = document.hidden;
         if (!hidden) {
+            var e = e;
+            var parentArguments = arguments;
             setTimeout(function(){
-                readDom();
+                if(!document.hidden){
+                    readDom();
+                    e.target.removeEventListener(e.type, parentArguments.callee);
+                }
             }, 1000);
-            e.target.removeEventListener(e.type, arguments.callee);
         }
     });
 } else {
