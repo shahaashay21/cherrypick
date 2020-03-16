@@ -19,6 +19,10 @@ body {
     margin: 0px 10px;
 }
 
+.cp-left-body > ul > li{
+    margin-bottom: 10px;
+}
+
 .navbar-nav a {
     padding-left: 20px !important;
     padding-right: 20px !important;
@@ -34,7 +38,7 @@ body {
 }
 
 .cp-left-body {
-    width: 230px;
+    width: 235px;
     float: left;
     box-shadow: 6px 0px 4px -4px rgba(0, 0, 0, 0.25);
     height: 400px;
@@ -46,14 +50,18 @@ body {
 
 .ellipses {
     text-overflow: ellipsis;
-    display: block;
     display: -webkit-box;
-    max-width: 170px;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     margin: 0;
     font-size: 12px;
+}
+
+.text-ellipses{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .p-title {
@@ -63,20 +71,20 @@ body {
 }
 
 .p-price {
+    font-size: 12px;
     margin-top: 2px;
-    float: left;
     margin-right: 4px;
     color: #555;
 }
 
-.p-amount {
+.p-number {
     color: #b12704;
     font-size: 13px;
     font-weight: 600;
-    float: left;
+    margin: 0;
 }
 
 .p-rating {
-    float: right;
     font-size: 12px;
+    margin: 0;
 }

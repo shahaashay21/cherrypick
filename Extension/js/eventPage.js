@@ -1,15 +1,20 @@
-drawProducts();
 const URL = "http://localhost:3000/";
 // Initalize
-let productInitialization = {
+const productInitialization = {
     recent: new Array(),
     saved: new Array(),
     expired: new Array(),
     pending: new Array()
 };
 
-let defaultOptions = {
+const defaultOptions = {
     maxDefaultRecentProducts: 10
+}
+
+const ownerIcons = {
+    "amazon": "amazon.png",
+    "walmart": "walmart.png",
+    "bestbuy": "bestbuy.png"
 }
 
 // Runs once in a lifetime when cherry pick is installed
@@ -54,10 +59,11 @@ async function newProductListner(clickedData) {
 // Get product details from content script and then add it to the extension
 function addNewProduct(){
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
-        chrome.tabs.sendMessage(tabs[0].id, {action: "getProductDetails"}, function(response) {
+        chrome.tabs.sendMessage(tabs[0].id, {action: "getProductDetails"}, async function(response) {
             console.log("Got the product details to add to extension");
             console.log(response);
-            addProductDetails(response, "saved");
+            await addProductDetails(response, "saved");
+            await addProductDetails(response, "recent");
         });  
     });
 }
@@ -104,53 +110,47 @@ chrome.storage.onChanged.addListener(function (changes, storageName) {
 
 // List all the products in the extension HTML page
 function drawProducts() {
+    console.log("DrawProducts");
     chrome.storage.sync.get(["products"], async function (chromeData) {
         if (chromeData.products) {
             products = JSON.parse(chromeData.products);
-            if (products.saved) {
-                for (productKey in products.saved) {
-                    product = products.saved[productKey];
-                    if (product && product.name) {
-                        newProduct =
-                            `<li class="media" style="height: 85px; cursor: pointer;">` +
-                            `<img src="https://www.w3schools.com/images/w3schools_green.jpg" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="...">` +
-                            `<div class="media-body">` +
-                            `<p class="ellipses p-title" class="mt-0 mb-1">${product.name}</p>` +
-                            `<p class="ellipses">${product.name}</p>` +
-                            `<p class="ellipses p-price">`;
-                        if (product.price && product.price != -1) {
-                            newProduct += `Price: <p class="p-amount">${product.price}</p>`;
-                        } else {
-                            newProduct += `Price: <p class="p-amount">Not available</p>`;
-                        }
-                        newProduct += `</p>` +
-                            `</div>` +
-                            `</li>`;
-                        $("#products").append(newProduct);
-                    }
-                };
-            }
-            // DO NOT ADD PENDING PRODUCTS TO THE EXTENSION
-            // if (products.pending) {
-            //     for (productKey in products.pending) {
-            //         productLink = products.pending[productKey];
-            //         if (productLink) {
-            //             newProduct =
-            //                 `<li class="media" style="height: 85px; cursor: pointer;">` +
-            //                 `<img src="#" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="...">` +
-            //                 `<div class="media-body">` +
-            //                 `<p class="ellipses p-title" class="mt-0 mb-1">${productLink}</p>` +
-            //                 `<p class="ellipses">Processing</p>` +
-            //                 `<p class="ellipses p-price">`;
-            //             newProduct += `Price: <p class="p-amount">Not available</p>`;
-            //             newProduct += `</p>` +
-            //                 `</div>` +
-            //                 `</li>`;
-            //             $("#products").append(newProduct);
-            //         }
-            //     };
+            ["saved", "recent", "expired"].forEach(infoType => {
+                $(`#${infoType}Products`).html(""); // Clear all the products first
+                if (products[infoType]) {
+                    for (productKey in products[infoType]) {
+                        let product = products[infoType][productKey];
+                        if (product && product.name) {
 
-            // }
+                            if (!product.price || product.price == -1) product.price = `Not available`;
+                            if (!product.ratings) product.ratings = `Not available`;
+                            if (!product.img) product.img = `../icons/img-not-available.png`;
+
+                            newProduct =
+                                `<li class="media" style="cursor: pointer;">` +
+                                `<img src="${product.img}" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="...">` +
+                                `<div class="media-body">` +
+                                    `<div style="max-width: 180px;">` +
+                                        `<div class="ellipses p-title" class="mt-0 mb-1">${product.name}</div>` +
+                                        `<div class="ellipses">${product.name}</div>` +
+                                        `<div style="display: inline-flex;">` +
+                                            `<div style="width: 130px;">` +
+                                                `<div class="text-ellipses p-price">` +
+                                                    `Price: <span class="p-number">${product.price}</span>`+
+                                                `</div>` +
+                                                    `<div class="text-ellipses p-rating">Ratings: <span class="p-number">${product.ratings}</span></div>` + 
+                                                `</div>` +
+                                                `<div>` +
+                                                    `<img src="../icons/${ownerIcons[product.owner]}" alt="${product.owner}" height="36" width="40">` +
+                                                `</div>` +
+                                            `</div>` +
+                                        `</div>` +
+                                    `</div>` +
+                                `</li>`;
+                            $(`#${infoType}Products`).append(newProduct);
+                        }
+                    };
+                }
+            });
         }
     });
 }
@@ -169,6 +169,7 @@ function addProductDetails(productInfo, infoType){
                 newProduct["ratings"] = productInfo.ratings;
                 newProduct["price"] = productInfo.price;
                 newProduct["name"] = productInfo.title;
+                newProduct["img"] = productInfo.img;
                 newProduct["timestamp"] = Date.now();
                 let sameProduct = await isSameProduct(products[infoType], newProduct);
                 if (sameProduct.isAvailable) {
@@ -208,4 +209,8 @@ chrome.runtime.onMessage.addListener(function (request, sender) {
         console.log(request.source);
         addProductDetails(request.source, "recent");
     }
+});
+
+$(document).ready(e => {
+    drawProducts();
 });
