@@ -39,7 +39,8 @@ const productInfo = function(req, res, next){
 
 const getInfo = function(req, res){
     const product = req.params.p;
-    const url = "https://www.walmart.com/search/?query="+product;
+    const url = `https://www.walmart.com/search/?query=${product}&&sort=best_seller`;
+    logger.info(`url: ${url}`);
     let productsInfo = {};
     let totalItems = 3;
     let j = 0;
@@ -47,7 +48,8 @@ const getInfo = function(req, res){
 
     axios.get(url).then((html) => {
         let $ = cheerio.load(html.data);
-        let itemList = $(".search-result-gridview-items > li");
+        let itemList = $("#searchProductResult > div > div");
+        logger.info(`Itemlist length: ${itemList.length}`);
         for(let i = 0; i < itemList.length; i++){
             if(totalItems <= 0) break;
             totalItems--;

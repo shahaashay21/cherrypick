@@ -17,6 +17,7 @@
     "helmet": "^3.21.2",
     "http-errors": "~1.6.3",
     "morgan": "~1.9.1",
+    "stack-trace": "0.0.10",
     "winston": "^3.2.1",
     "winston-daily-rotate-file": "^4.4.2"
   },

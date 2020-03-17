@@ -17,6 +17,8 @@ const ownerIcons = {
     "bestbuy": "bestbuy.png"
 }
 
+const allWebsites = ["amazon", "walmart", "bestbuy"];
+
 // Runs once in a lifetime when cherry pick is installed
 chrome.runtime.onInstalled.addListener(function () {
     console.log("Welcome to Cherry-Pick");
@@ -205,6 +207,75 @@ function addProductDetails(productInfo, infoType){
     });
 }
 
+function compareAllProducts(){
+    return new Promise(resolve => {
+        chrome.storage.sync.get(["products", "defaultOptions"], async function (chromeData) {
+            if (chromeData.products) {
+                let products = JSON.parse(chromeData.products);
+                let defaultOptions = JSON.parse(chromeData.defaultOptions);
+
+                ["saved", "recent"].forEach(async (infoType) => {
+                    if (products[infoType]) {
+                        for (productKey in products[infoType]) {
+                            let product = products[infoType][productKey];
+                            if (product && product.name && product.timestamp) {
+                                if(((Date.now() - product.timestamp) / 1000) > 5){ // If the product hasn't been updated since more than 1 hr
+                                    let productDetails = await compareProduct(product);
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    })
+}
+
+function compareProduct(product){
+    return new Promise(async (resolve) => {
+        let allWebsitesRequests = allWebsites.filter(website => website != product.owner).map((website) => {
+            if(website != product.owner) return compareProductRequest(website, product.name)
+        });
+        let allWebsitesResponse = await Promise.all(allWebsitesRequests);
+        console.log(`compareProduct`);
+        console.log(allWebsitesResponse);
+        resolve(allWebsitesResponse);
+    });
+}
+
+function compareProductRequest(compareAgainst, productName){
+    return new Promise(resolve => {
+        let urlPath = URL + compareAgainst + "/products/" + encodeURI(productName);
+        $.ajax({
+            url: urlPath,
+            timeout: 6000,
+            tryCount: 0,
+            retryLimit: 2,
+            success: function (productInfo) {
+                console.log("Got the reply");
+                console.log(productInfo);
+                return resolve(productInfo);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (textStatus == 'timeout') {
+                    this.tryCount++;
+                    if (this.tryCount <= this.retryLimit) {
+                        //try again
+                        console.log(`Remaining Retry: ${this.retryLimit - 1}`);
+                        $.ajax(this);
+                    } else {
+                        alert(`Failed to add an item. Please try again: ${urlPath}`);
+                        console.log("AJAX time out");
+                        return resolve({error: 1, message: textStatus});
+                    }
+                } else {
+                    return resolve({error: 1, message: textStatus});
+                }
+            },
+        });
+    });
+}
+
 // MESSAGE LISTNER
 // 1. Get product details as soon as page is loaded
 chrome.runtime.onMessage.addListener(function (request, sender) {
@@ -217,4 +288,5 @@ chrome.runtime.onMessage.addListener(function (request, sender) {
 
 $(document).ready(e => {
     drawProducts();
+    compareAllProducts();
 });

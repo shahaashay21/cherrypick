@@ -1,52 +1,64 @@
 {
     "new": [
         {
-            "itemId": 8965451,
             "owner": "amazon",
             "link": "Item link",
             "price": 70,
+            "img": "http://imagelink",
             "name": "Name of the product",
             "timestamp": "5",
-            "suggestions": {
-                "walmart": [
-                    {
-                        "link": "Item link",
-                        "price": 85,
-                        "name": "Name of the product",
-                        "ratings": 4.8
-                    },
-                    {
-                        "link": "Item link",
-                        "price": 85,
-                        "name": "Name of the product",
-                        "ratings": 4.8
-                    }
-                ]
-            }
+            "suggestions": [
+                {
+                    "owner": "walmart",
+                    "link": "Item link",
+                    "price": 85,
+                    "name": "Name of the product",
+                    "ratings": 4.8,
+                    "img": "http://imagelink",
+                    "timestamp": 123548964,
+                    "index": 0
+                },
+                {
+                    "owner": "bestbuy",
+                    "link": "Item link",
+                    "price": 85,
+                    "name": "Name of the product",
+                    "ratings": 4.8,
+                    "img": "http://imagelink",
+                    "timestamp": 123548964,
+                    "index": 0
+                }   
+            ]
         },
         {
-            "itemId": 4165416,
             "owner": "walmart",
             "link": "Item link",
             "price": 157,
+            "img": "http://imagelink",
             "name": "Name of the product",
             "timestamp": "4",
-            "suggestions": {
-                "amazon": [
-                    {
-                        "link": "Item link",
-                        "price": 145,
-                        "name": "Name of the product",
-                        "ratings": 4.8
-                    },
-                    {
-                        "link": "Item link",
-                        "price": 149,
-                        "name": "Name of the product",
-                        "ratings": 4.8
-                    }
-                ]
-            }
+            "suggestions": [
+                {
+                    "owner": "amazon",
+                    "link": "Item link",
+                    "price": 85,
+                    "name": "Name of the product",
+                    "ratings": 4.8,
+                    "img": "http://imagelink",
+                    "timestamp": 123548964,
+                    "index": 0
+                },
+                {
+                    "owner": "bestbuy",
+                    "link": "Item link",
+                    "price": 85,
+                    "name": "Name of the product",
+                    "ratings": 4.8,
+                    "img": "http://imagelink",
+                    "timestamp": 123548964,
+                    "index": 0
+                }   
+            ]
         }
     ],
     "expired": [

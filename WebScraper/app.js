@@ -4,7 +4,9 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var helmet = require('helmet');
 var logger = require('morgan');
-var session = require('express-session')
+var session = require('express-session');
+
+var winston = require('./utils/winston');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -13,6 +15,19 @@ var bestbuyRouter = require('./routes/bestbuy');
 var walmartRouter = require('./routes/walmart');
 
 var app = express();
+
+//Set log middleware
+function logRequest(req, res, next) {
+  winston.info(req.url)
+  next()
+}
+app.use(logRequest)
+
+function logError(err, req, res, next) {
+  winston.error(err)
+  next()
+}
+app.use(logError)
 
 // Initalize session
 app.use(session({
