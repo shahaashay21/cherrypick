@@ -39,27 +39,35 @@ const productInfo = function(req, res, next){
 
 const getInfo = function(req, res){
     const product = req.params.p;
-    const url = `https://www.walmart.com/search/?query=${product}&&sort=best_seller`;
+    const url = `https://www.walmart.com/search/?grid=false&query=${product}&sort=best_match`;
     logger.info(`url: ${url}`);
-    let productsInfo = {};
+    let productsInfo = new Array();
     let totalItems = 3;
     let j = 0;
     let response = {};
 
     axios.get(url).then((html) => {
         let $ = cheerio.load(html.data);
-        let itemList = $("#searchProductResult > div > div");
+        let itemList = $(".search-result-gridview-items > li");
+        if(itemList.length == 0) itemList = $("#searchProductResult > div > div");
         logger.info(`Itemlist length: ${itemList.length}`);
         for(let i = 0; i < itemList.length; i++){
             if(totalItems <= 0) break;
             totalItems--;
             productsInfo[j] = {};
+            productsInfo[j]['owner'] = "walmart";
             productsInfo[j]['price'] = $(itemList[i]).find(".price-main-block").find(".visuallyhidden").text();
-            productsInfo[j]['price'] = productsInfo[j]['price'].match(/([0-9]+\.*[0-9]*)/)[0].trim();
+            let priceMatch = productsInfo[j]['price'].match(/([0-9]+\.*[0-9]*)/);
+            if(priceMatch && priceMatch.length > 0){
+                productsInfo[j]['price'] = priceMatch[0].trim();
+            } else {
+                productsInfo[j]['price'] = "Not available"
+            }
             productsInfo[j]['productUrl'] = "http://walmart.com"+$(itemList[i]).find(".search-result-product-title > a").attr("href");
             productsInfo[j]['productName'] = $(itemList[i]).find(".search-result-product-title > a > span").text();
             productsInfo[j]['ratings'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-avg-rating").text().trim();
             productsInfo[j]['reviews'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-review-count").text().trim();
+            productsInfo[j]['img'] = $(itemList[i]).find(".orientation-square").find("img").attr("src");
             productsInfo[j]['index'] = j;
             j++;
         }

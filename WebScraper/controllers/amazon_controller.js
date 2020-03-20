@@ -42,7 +42,7 @@ const productInfo = function(req, res, next){
 const getInfo = function(req, res){
     const product = req.params.p;
     const url = "https://www.amazon.com/s?k="+product;
-    let productsInfo = {};
+    let productsInfo = new Array();
     let totalItems = 3;
     let j = 0;
     let response = {};
@@ -53,12 +53,18 @@ const getInfo = function(req, res){
         for(let i = 0; i < itemList.length; i++){
             if(totalItems <= 0) break;
             const sponsoredProduct = $(itemList[i]).find(`[data-component-type=sp-sponsored-result]`);
-            if(sponsoredProduct.length == 0){
+            const adviserProducts = $(itemList[i]).find(`[cel_widget_id=SEARCH_RESULTS-SHOPPING_ADVISER]`);
+            if(sponsoredProduct.length == 0 && adviserProducts.length == 0){
                 totalItems--;
                 productsInfo[j] = {};
+                productsInfo[j]['owner'] = "amazon";
                 productsInfo[j]['price'] = $(itemList[i]).find(".a-price > .a-offscreen").html();
                 productsInfo[j]['productUrl'] = "http://amazon.com"+$(itemList[i]).find("a.a-link-normal.a-text-normal").attr("href");
-                productsInfo[j]['productName'] = $(itemList[i]).find("a.a-link-normal.a-text-normal").find("span").text();
+                productsInfo[j]['img'] = $(itemList[i]).find("img.s-image").attr("src");
+                productsInfo[j]['productName'] = $(itemList[i]).find("a.a-link-normal.a-text-normal > span");
+                if(productsInfo[j]['productName']){
+                    productsInfo[j]['productName'] = productsInfo[j]['productName'].first().text();
+                }
                 productsInfo[j]['ratings'] = $(itemList[i]).find(".a-popover-trigger").text().match(/(^[0-9]*\.*[0-9]*)\s/gm)[0].trim();
                 productsInfo[j]['index'] = j;
                 j++;

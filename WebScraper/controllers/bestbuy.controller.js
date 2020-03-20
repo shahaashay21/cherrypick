@@ -37,9 +37,13 @@ const productInfo = function(req, res, next){
 };
 
 const getInfo = function(req, res){
-    const product = req.params.p;
+    let product = req.params.p;
+    const bestbuyMaxSearchChar = 90;
+    logger.info(`Product: ${product}`);
+    product = product.substring(0, bestbuyMaxSearchChar);
     const url = "https://www.bestbuy.com/site/searchpage.jsp?st="+product;
-    let productsInfo = {};
+    logger.info(`Bestbuy URL: ${url}`);
+    let productsInfo = new Array();
     let totalItems = 3;
     let j = 0;
     let response = {};
@@ -47,17 +51,20 @@ const getInfo = function(req, res){
     axios.get(url).then((html) => {
         let $ = cheerio.load(html.data);
         let itemList = $(".sku-item-list > li");
+        logger.info(`Itemlist length: ${itemList.length}`);
         for(let i = 0; i < itemList.length; i++){
             if(totalItems <= 0) break;
             const isProduct = $(itemList[i]).hasClass("sku-item");
             if(isProduct){
                 totalItems--;
                 productsInfo[j] = {};
+                productsInfo[j]['owner'] = "bestbuy";
                 productsInfo[j]['price'] = $(itemList[i]).find(".price-block").find(".priceView-hero-price.priceView-customer-price > span").first().text();
                 productsInfo[j]['price'] = productsInfo[j]['price'].match(/([0-9]+\.*[0-9]*)/gm)[0].trim();
-                productsInfo[j]['productUrl'] = "http://bestbuy.com"+$(itemList[i]).find(".information").find(".sku-title > .sku-header > a").attr("href");
-                productsInfo[j]['productName'] = $(itemList[i]).find(".information").find(".sku-title > .sku-header > a").text();
+                productsInfo[j]['productUrl'] = "http://bestbuy.com"+$(itemList[i]).find(".information").find(".sku-title").find("a").attr("href");
+                productsInfo[j]['productName'] = $(itemList[i]).find(".information").find(".sku-title").find("a").text();
                 productsInfo[j]['ratings'] = $(itemList[i]).find(".information").find(".ratings-reviews").find(".reviews-stats-list").find(".c-ratings-reviews-v2 > i").attr(`alt`).trim();
+                productsInfo[j]['img'] = $(itemList[i]).find(".image-column").find("img.product-image").attr("src");
                 productsInfo[j]['index'] = j;
                 j++;
             }
@@ -69,6 +76,7 @@ const getInfo = function(req, res){
         logger.error(e.message);
         response['error'] = 1;
         response['message'] = e.message;
+        res.json(response);
     });
 }
 

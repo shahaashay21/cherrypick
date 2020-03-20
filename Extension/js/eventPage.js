@@ -207,7 +207,8 @@ function addProductDetails(productInfo, infoType){
     });
 }
 
-function compareAllProducts(){
+function compareAllProducts(checkSyncTime){
+    const syncTimeLimit = 60 //seconds
     return new Promise(resolve => {
         chrome.storage.sync.get(["products", "defaultOptions"], async function (chromeData) {
             if (chromeData.products) {
@@ -219,9 +220,35 @@ function compareAllProducts(){
                         for (productKey in products[infoType]) {
                             let product = products[infoType][productKey];
                             if (product && product.name && product.timestamp) {
-                                if(((Date.now() - product.timestamp) / 1000) > 5){ // If the product hasn't been updated since more than 1 hr
+                                if(checkSyncTime && ((Date.now() - product.timestamp) / 1000) > syncTimeLimit){ // If the product hasn't been updated since more than syncTimeLimit
                                     let productDetails = await compareProduct(product);
+                                    updateSuggestedProduct(product.name, product.owner, productDetails);
+                                    console.log("Final product details");
+                                    console.log(productDetails);
                                 }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    })
+}
+
+function updateSuggestedProduct(productName, productOwner, productSuggestions){
+    return new Promise(resolve => {
+        chrome.storage.sync.get(["products"], async function (chromeData) {
+            if (chromeData.products) {
+                let products = JSON.parse(chromeData.products);
+                ["saved", "recent"].forEach(async (infoType) => {
+                    if (products[infoType]) {
+                        for (productKey in products[infoType]) {
+                            let product = products[infoType][productKey];
+                            if (product && product.name == productName && product.owner == productOwner) {
+                                product.timestamp = Date.now();
+                                product.suggestions = productSuggestions;
+                                chrome.storage.sync.set({ products: JSON.stringify(products) });
+                                resolve();
                             }
                         }
                     }
@@ -239,13 +266,27 @@ function compareProduct(product){
         let allWebsitesResponse = await Promise.all(allWebsitesRequests);
         console.log(`compareProduct`);
         console.log(allWebsitesResponse);
-        resolve(allWebsitesResponse);
+        let allProducts = new Array();
+        allWebsitesResponse.forEach(websiteResponse => {
+            if(websiteResponse.error == 0){
+                if(websiteResponse.productsInfo){
+                    console.log("PRODUCTS INFO");
+                    console.log(websiteResponse.productsInfo);
+                    websiteResponse.productsInfo.forEach(productInfo => {
+                        if(productInfo.price){
+                            allProducts.push(productInfo);                            
+                        }
+                    });
+                }
+            }
+        });
+        resolve(allProducts);
     });
 }
 
 function compareProductRequest(compareAgainst, productName){
     return new Promise(resolve => {
-        let urlPath = URL + compareAgainst + "/products/" + encodeURI(productName);
+        let urlPath = URL + compareAgainst + "/products/" + encodeURIComponent(productName);
         $.ajax({
             url: urlPath,
             timeout: 6000,
@@ -264,7 +305,7 @@ function compareProductRequest(compareAgainst, productName){
                         console.log(`Remaining Retry: ${this.retryLimit - 1}`);
                         $.ajax(this);
                     } else {
-                        alert(`Failed to add an item. Please try again: ${urlPath}`);
+                        // alert(`Failed to add an item. Please try again: ${urlPath}`);
                         console.log("AJAX time out");
                         return resolve({error: 1, message: textStatus});
                     }
@@ -288,5 +329,7 @@ chrome.runtime.onMessage.addListener(function (request, sender) {
 
 $(document).ready(e => {
     drawProducts();
-    compareAllProducts();
+    $(".ex").click(e => {
+        compareAllProducts(false);
+    });
 });
