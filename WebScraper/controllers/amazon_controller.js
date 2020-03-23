@@ -46,12 +46,11 @@ const getInfo = function(req, res){
     let totalItems = 3;
     let j = 0;
     let response = {};
-    logger.info(`URL: ${url}`);
 
     axios.get(url).then((html) => {
         let $ = cheerio.load(html.data);
         let itemList = $(".s-result-list.s-search-results > div");
-        logger.info(`Itemlist length: ${itemList.length}`);
+        logger.info(`Itemlist length: ${itemList.length} and URL: ${url}`);
         for(let i = 0; i < itemList.length; i++){
             if(totalItems <= 0) break;
             const sponsoredProduct = $(itemList[i]).find(`[data-component-type=sp-sponsored-result]`);

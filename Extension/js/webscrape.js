@@ -108,7 +108,10 @@ function getWalmartProduct(){
         productInfo['title'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
         productInfo['ratings'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=ratingValue]`).text().trim();
         productInfo['reviews'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=reviewCount]`).text().trim();
-        productInfo['img'] = "https:" + $(".prod-alt-image-wrapper").find(".slider-list").find("li").find("img").attr("src");
+        productInfo['img'] = $(".prod-alt-image-wrapper").find(".slider-list").find("img").attr("src");
+        if(productInfo['img']){
+            productInfo['img'] = "https:" + productInfo['img'];
+        }
         productInfo['url'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;

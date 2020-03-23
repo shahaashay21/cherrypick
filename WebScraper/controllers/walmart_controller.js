@@ -24,7 +24,10 @@ const productInfo = function(req, res, next){
         productInfo['title'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
         productInfo['ratings'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=ratingValue]`).text().trim();
         productInfo['reviews'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=reviewCount]`).text().trim();
-        productInfo['img'] = "https:" + $(".prod-alt-image-wrapper").find(".slider-list").find("li").find("img").attr("src");
+        productInfo['img'] = $(".prod-alt-image-wrapper").find(".slider-list").find("img").attr("src");
+        if(productInfo['img']){
+            productInfo['img'] = "https:" + productInfo['img'];
+        }
         productInfo['url'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;
@@ -39,8 +42,8 @@ const productInfo = function(req, res, next){
 
 const getInfo = function(req, res){
     const product = req.params.p;
+    logger.info(`Prduct name: ${product}`);
     const url = `https://www.walmart.com/search/?grid=false&query=${product}&sort=best_match`;
-    logger.info(`url: ${url}`);
     let productsInfo = new Array();
     let totalItems = 3;
     let j = 0;
@@ -50,7 +53,7 @@ const getInfo = function(req, res){
         let $ = cheerio.load(html.data);
         let itemList = $(".search-result-gridview-items > li");
         if(itemList.length == 0) itemList = $("#searchProductResult > div > div");
-        logger.info(`Itemlist length: ${itemList.length}`);
+        logger.info(`Itemlist length: ${itemList.length} and URL: ${url}`);
         for(let i = 0; i < itemList.length; i++){
             if(totalItems <= 0) break;
             totalItems--;

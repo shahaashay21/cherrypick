@@ -10,7 +10,8 @@ const productInitialization = {
 const syncCategories = ["saved", "recent"];
 
 const defaultOptions = {
-    maxDefaultRecentProducts: 10
+    maxDefaultRecentProducts: 10,
+    syncTimeLimit: 600 //seconds
 }
 
 const ownerIcons = {
@@ -55,7 +56,6 @@ async function newProductListner(clickedData) {
             });
             await addPendingProduct(pageUrl);
             addNewProduct();
-            drawProducts();
         } else {
             alert("Current URL is not supported: " + pageUrl);
         }
@@ -170,7 +170,7 @@ function drawProducts() {
                         if (product && product.suggestions) {
                             product.suggestions.forEach(suggestedProduct => {
 
-                                if (!suggestedProduct.price || suggestedProduct.price == -1){
+                                if (!suggestedProduct.price || suggestedProduct.price == -1 || suggestedProduct.price == "Not available"){
                                     suggestedProduct.price = `Not available`;
                                 } else {
                                     suggestedProduct.price = `$${suggestedProduct.price}`;
@@ -235,23 +235,25 @@ function addProductDetails(productInfo, infoType){
                 newProduct["price"] = productInfo.price;
                 newProduct["name"] = productInfo.title;
                 newProduct["img"] = productInfo.img;
-                newProduct["timestamp"] = Date.now();
+                newProduct["createdTime"] = Date.now();
+                newProduct["updatedTime"] = Date.now();
+                newProduct["newProduct"] = 1; // 1 to get the product suggestions
                 let sameProduct = await isSameProduct(products[infoType], newProduct);
-                if (sameProduct.isAvailable) {
+                if (sameProduct.isAvailable) { // remove same product before adding
                     products[infoType].splice(sameProduct.position, 1);
+                    console.log(`Product is already added to Cherry Pick: ${productInfo.url} `);
                 }
                 products[infoType].push(newProduct);
-                products[infoType].sort(function (a, b) { return b["timestamp"] - a["timestamp"] });
-                if(infoType == "recent"){
+                products[infoType].sort(function (a, b) { return b["createdTime"] - a["createdTime"] });
+                if(infoType == "recent"){ // if the product reaches to the max limit then remove oldest product
                     if(products[infoType].length > defaultOptions.maxDefaultRecentProducts){
                         products[infoType].splice(products[infoType].length - 1, 1);
                     }
                 }
                 chrome.storage.local.set({ products: JSON.stringify(products) }, async () => {
+                    drawProducts();
                     await removePendingProduct(products, productInfo.url);
-                    if (sameProduct.isAvailable) {
-                        console.log(`Product is already added to Cherry Pick: ${productInfo.url} `);
-                    }
+                    compareAndDrawProducts(true);
                     return resolve();
                 });
             } else {
@@ -267,21 +269,22 @@ function addProductDetails(productInfo, infoType){
 }
 
 function compareAllProducts(checkSyncTime){
-    const syncTimeLimit = 60 //seconds
     return new Promise(resolve => {
         chrome.storage.local.get(["products", "defaultOptions"], async function (chromeData) {
             if (chromeData.products) {
                 let products = JSON.parse(chromeData.products);
                 let defaultOptions = JSON.parse(chromeData.defaultOptions);
+                let isProductUpdated = 0;
 
                 for(let infoType of syncCategories){
                     if (products[infoType]) {
                         for (productKey in products[infoType]) {
                             let product = products[infoType][productKey];
-                            if (product && product.name && product.timestamp) {
-                                if(!checkSyncTime || (checkSyncTime && ((Date.now() - product.timestamp) / 1000) > syncTimeLimit)){ // If the product hasn't been updated since more than syncTimeLimit
+                            if (product && product.name && product.updatedTime) {
+                                if(!checkSyncTime || (checkSyncTime && ((Date.now() - product.updatedTime) / 1000) > defaultOptions.syncTimeLimit) || product.newProduct){ // If the product hasn't been updated since more than syncTimeLimit
                                     let productDetails = await compareProduct(product);
                                     await updateSuggestedProduct(product.name, product.owner, productDetails);
+                                    isProductUpdated = 1;
                                     // console.log("Final product details");
                                     // console.log(productDetails);
                                 }
@@ -290,7 +293,7 @@ function compareAllProducts(checkSyncTime){
                     }
                 }
                 console.log("Sending back compareAllProducts");
-                resolve();
+                return resolve(isProductUpdated);
             }
         });
     })
@@ -324,7 +327,9 @@ function compareProduct(product){
 
 function compareProductRequest(compareAgainst, productName){
     return new Promise(resolve => {
-        let urlPath = URL + compareAgainst + "/products/" + encodeURIComponent(productName);
+        productName = productName.replace(/[^\x00-\x7F]/g, "");
+        productName = encodeURIComponent(productName);
+        let urlPath = URL + compareAgainst + "/products/" + productName;
         $.ajax({
             url: urlPath,
             timeout: 6000,
@@ -365,7 +370,8 @@ function updateSuggestedProduct(productName, productOwner, productSuggestions){
                         for (productKey in products[infoType]) {
                             let product = products[infoType][productKey];
                             if (product && product.name == productName && product.owner == productOwner) {
-                                product.timestamp = Date.now();
+                                product.newProduct = 0;
+                                product.updatedTime = Date.now();
                                 product.suggestions = productSuggestions;
                                 chrome.storage.local.set({ products: JSON.stringify(products) });                                
                             }
@@ -378,6 +384,14 @@ function updateSuggestedProduct(productName, productOwner, productSuggestions){
     })
 }
 
+function compareAndDrawProducts(checkSyncTime){
+    return new Promise(async (resolve) => {
+        let isProductUpdated = await compareAllProducts(checkSyncTime);
+        if(isProductUpdated) drawProducts();
+        resolve();
+    });
+}
+
 // MESSAGE LISTNER
 // 1. Get product details as soon as page is loaded
 chrome.runtime.onMessage.addListener(async function (request, sender) {
@@ -385,16 +399,13 @@ chrome.runtime.onMessage.addListener(async function (request, sender) {
         console.log("Initial Product Info");
         console.log(request.source);
         await addProductDetails(request.source, "recent");
-        drawProducts();
     }
 });
 
 $(document).ready(async (e) => {
     drawProducts();
     $(".ex").click(async (e) => {
-        await compareAllProducts(false);
-        drawProducts();
+        await compareAndDrawProducts(false);
     });
-    await compareAllProducts(true);
-    drawProducts();
+    await compareAndDrawProducts(true);
 });

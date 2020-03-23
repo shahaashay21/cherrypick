@@ -39,10 +39,8 @@ const productInfo = function(req, res, next){
 const getInfo = function(req, res){
     let product = req.params.p;
     const bestbuyMaxSearchChar = 90;
-    logger.info(`Product: ${product}`);
     product = product.substring(0, bestbuyMaxSearchChar);
     const url = "https://www.bestbuy.com/site/searchpage.jsp?st="+product;
-    logger.info(`Bestbuy URL: ${url}`);
     let productsInfo = new Array();
     let totalItems = 3;
     let j = 0;
@@ -51,7 +49,7 @@ const getInfo = function(req, res){
     axios.get(url).then((html) => {
         let $ = cheerio.load(html.data);
         let itemList = $(".sku-item-list > li");
-        logger.info(`Itemlist length: ${itemList.length}`);
+        logger.info(`Itemlist length: ${itemList.length} and URL: ${url}`);
         for(let i = 0; i < itemList.length; i++){
             if(totalItems <= 0) break;
             const isProduct = $(itemList[i]).hasClass("sku-item");
