@@ -4,20 +4,20 @@ body {
 }
 
 /* Scroll bar */
-.cp-left-body::-webkit-scrollbar-track
+.cp-left-body::-webkit-scrollbar-track, .cp-right-body::-webkit-scrollbar-track
 {
 	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
 	border-radius: 4px;
 	background-color: #F5F5F5;
 }
 
-.cp-left-body::-webkit-scrollbar
+.cp-left-body::-webkit-scrollbar, .cp-right-body::-webkit-scrollbar
 {
 	width: 6px;
 	background-color: #F5F5F5;
 }
 
-.cp-left-body::-webkit-scrollbar-thumb
+.cp-left-body::-webkit-scrollbar-thumb, .cp-right-body::-webkit-scrollbar-thumb
 {
 	border-radius: 4px;
 	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
@@ -108,4 +108,19 @@ body {
 .p-rating {
     font-size: 12px;
     margin: 0;
+}
+
+.ps-card-footer{
+    display: flex;
+    justify-content: space-between;
+}
+
+.ps-price-ratings{
+    width: 200px;
+    justify-content: flex-start;
+}
+
+.ps-company-img{
+    justify-content:
+    flex-end; margin-top: 5px;
 }

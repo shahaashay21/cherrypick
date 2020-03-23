@@ -46,10 +46,12 @@ const getInfo = function(req, res){
     let totalItems = 3;
     let j = 0;
     let response = {};
+    logger.info(`URL: ${url}`);
 
     axios.get(url).then((html) => {
         let $ = cheerio.load(html.data);
         let itemList = $(".s-result-list.s-search-results > div");
+        logger.info(`Itemlist length: ${itemList.length}`);
         for(let i = 0; i < itemList.length; i++){
             if(totalItems <= 0) break;
             const sponsoredProduct = $(itemList[i]).find(`[data-component-type=sp-sponsored-result]`);
@@ -59,13 +61,22 @@ const getInfo = function(req, res){
                 productsInfo[j] = {};
                 productsInfo[j]['owner'] = "amazon";
                 productsInfo[j]['price'] = $(itemList[i]).find(".a-price > .a-offscreen").html();
+                if(productsInfo[j]['price']){
+                    productsInfo[j]['price'] = productsInfo[j]['price'].match(/([0-9,\.]+)/)[0].trim();
+                    productsInfo[j]['price'] = productsInfo[j]['price'].replace(",","");
+                } else {
+                    productsInfo[j]['price'] = -1;
+                }
                 productsInfo[j]['productUrl'] = "http://amazon.com"+$(itemList[i]).find("a.a-link-normal.a-text-normal").attr("href");
                 productsInfo[j]['img'] = $(itemList[i]).find("img.s-image").attr("src");
                 productsInfo[j]['productName'] = $(itemList[i]).find("a.a-link-normal.a-text-normal > span");
                 if(productsInfo[j]['productName']){
                     productsInfo[j]['productName'] = productsInfo[j]['productName'].first().text();
                 }
-                productsInfo[j]['ratings'] = $(itemList[i]).find(".a-popover-trigger").text().match(/(^[0-9]*\.*[0-9]*)\s/gm)[0].trim();
+                productsInfo[j]['ratings'] = $(itemList[i]).find(".a-popover-trigger").text();
+                if(productsInfo[j]['ratings']){
+                    productsInfo[j]['ratings'] = productsInfo[j]['ratings'].match(/(^[0-9]*\.*[0-9]*)\s/gm)[0].trim();
+                }
                 productsInfo[j]['index'] = j;
                 j++;
             }
@@ -77,6 +88,7 @@ const getInfo = function(req, res){
         logger.error(e.message);
         response['error'] = 1;
         response['message'] = e.message;
+        res.json(response);
     });
 }
 

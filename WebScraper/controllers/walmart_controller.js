@@ -78,6 +78,7 @@ const getInfo = function(req, res){
         logger.error(e.message);
         response['error'] = 1;
         response['message'] = e.message;
+        res.json(response);
     });
 }
 

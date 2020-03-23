@@ -52,7 +52,29 @@
                             <div class="ellipses">Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque
                                 ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce
                                 condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.</div>
-                            <div style="display: inline-flex;">
+                            <div style="display: flex;">
+                                <div style="width: 130px;">
+                                    <div class="text-ellipses p-price">Price: <span class="p-number">$123456789.00</span></div>
+                                    <div class="text-ellipses p-rating">Ratings: <span class="p-number">4.6</span></div>
+                                </div>
+                                <div>
+                                    <img src="../icons/walmart.png" height="36" width="40" alt="company name">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+
+                <li class="media" style="cursor: pointer;">
+                    <img src="https://www.w3schools.com/images/w3schools_green.jpg" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="...">
+                    <div class="media-body">
+                        <div style="max-width: 180px;">
+                            <div class="ellipses p-title" class="mt-0 mb-1">List-based media object sdfs sdf ew gh hrtgtr
+                                rgerge</div>
+                            <div class="ellipses">Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque
+                                ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce
+                                condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.</div>
+                            <div style="display: flex;">
                                 <div style="width: 130px;">
                                     <div class="text-ellipses p-price">Price: <span class="p-number">$123456789.00</span></div>
                                     <div class="text-ellipses p-rating">Ratings: <span class="p-number">4.6</span></div>
@@ -69,6 +91,55 @@
         </div>
         <div class="cp-right-body overflow-auto" style="padding: 15px 5px;">
 
+            <ul class="list-unstyled" id="recentSuggestedProducts">
+
+                <li class="media" style="cursor: pointer;">
+                    <img src="https://www.w3schools.com/images/w3schools_green.jpg" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="...">
+                    <div class="media-body">
+                        <div style="max-width: 320px;">
+                            <div class="ellipses p-title" class="mt-0 mb-1">List-based media object sdfs sdf ew gh hrtgtr
+                                rgerge</div>
+                            <div class="ellipses">Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque
+                                ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce
+                                condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.</div>
+                            <div class="ps-card-footer">
+                                <div class="ps-price-ratings">
+                                    <div class="text-ellipses p-price">Price: <span class="p-number">$123456789.00</span></div>
+                                    <div class="text-ellipses p-rating">Ratings: <span class="p-number">4.6</span></div>
+                                </div>
+                                <div class="ps-company-img">
+                                    <img src="../icons/walmart.png" height="40" width="50" alt="company name">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+
+
+                <li class="media" style="cursor: pointer;">
+                    <img src="https://www.w3schools.com/images/w3schools_green.jpg" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="...">
+                    <div class="media-body">
+                        <div style="max-width: 320px;">
+                            <div class="ellipses p-title" class="mt-0 mb-1">List-based media object sdfs sdf ew gh hrtgtr
+                                rgerge</div>
+                            <div class="ellipses">Cras sit amet nibh libero, in gravida nulla. Nulla vel metus scelerisque
+                                ante sollicitudin. Cras purus odio, vestibulum in vulputate at, tempus viverra turpis. Fusce
+                                condimentum nunc ac nisi vulputate fringilla. Donec lacinia congue felis in faucibus.</div>
+                            <div class="ps-card-footer">
+                                <div class="ps-price-ratings">
+                                    <div class="text-ellipses p-price">Price: <span class="p-number">$123456789.00</span></div>
+                                    <div class="text-ellipses p-rating">Ratings: <span class="p-number">4.6</span></div>
+                                </div>
+                                <div class="ps-company-img">
+                                    <img src="../icons/amazon.png" height="40" width="50" alt="company name">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+
+            </ul>
+
         </div>
     </div>
     <div class="cp-body" id="savedProductWindow">
@@ -78,7 +149,9 @@
             </ul>
         </div>
         <div class="cp-right-body overflow-auto" style="padding: 15px 5px;">
+            <ul class="list-unstyled" id="savedSuggestedProducts">
 
+            </ul>
         </div>
     </div>
     <div class="cp-body" id="expiredProductWindow">
@@ -88,7 +161,9 @@
             </ul>
         </div>
         <div class="cp-right-body overflow-auto" style="padding: 15px 5px;">
+            <ul class="list-unstyled" id="expiredSuggestedProducts">
 
+            </ul>
         </div>
     </div>
 </body>
