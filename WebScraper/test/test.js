@@ -24,9 +24,9 @@ describe('Unit tests', function() {
 
   // performance testing
   describe.skip('Performance', function(){
-    const maxRequests = 100;
-    const requestsPerSecond = 100;
-    it(`should perform ${requestsPerSecond} requests per hour`, function(done){
+    const maxRequests = 12;
+    const requestsPerSecond = 3;
+    it(`should perform ${requestsPerSecond} requests per second`, function(done){
       function statusCallback(error, result, latency) {
           console.log('Current latency %j, result %j, error %j', latency, result, error);
           console.log('----');
@@ -83,7 +83,7 @@ describe('Unit tests', function() {
       request(url + "/amazon/products/Acer%20SB220Q%20bi%2021.5%20inches%20Full%20HD%20(1920%20x%201080)%20IPS%20Ultra-Thin%20Zero%20Frame%20Monitor%20(HDMI%20&%20VGA%20port)" , function(error, response, body) {
         body = JSON.parse(body);
         if(body.error == 0){
-          expect(Object.keys(body.productsInfo).length).to.equal(3);
+          expect((body.productsInfo).length).to.equal(3);
           done();
         } else {
           done(body.message);
@@ -107,7 +107,7 @@ describe('Unit tests', function() {
       request(url + "/bestbuy?url=https://www.bestbuy.com/site/apple-airpods-wireless-charging-case-white/6296120.p?skuId=6296120" , function(error, response, body) {
         body = JSON.parse(body);
         if(body.error == 0){
-          expect(Object.keys(body.productInfo).length).to.equal(5);
+          expect(Object.keys(body.productInfo).length).to.equal(6);
           done();
         } else {
           done(body.message);
@@ -119,7 +119,7 @@ describe('Unit tests', function() {
       request(url + "/bestbuy/products/airpod%20charging%20case" , function(error, response, body) {
         body = JSON.parse(body);
         if(body.error == 0){
-          expect(Object.keys(body.productsInfo).length).to.equal(3);
+          expect((body.productsInfo).length).to.equal(3);
           done();
         } else {
           done(body.message);
@@ -155,7 +155,7 @@ describe('Unit tests', function() {
       request(url + "/walmart/products/airpod%20charging%20case" , function(error, response, body) {
         body = JSON.parse(body);
         if(body.error == 0){
-          expect(Object.keys(body.productsInfo).length).to.equal(3);
+          expect((body.productsInfo).length).to.equal(3);
           done();
         } else {
           done(body.message);

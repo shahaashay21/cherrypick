@@ -37,6 +37,7 @@ const productInfo = function(req, res, next){
         logger.error(e.message);
         response['error'] = 1;
         response['message'] = e.message;
+        res.json(response);
     });
 };
 
