@@ -44,45 +44,56 @@ function supportedSiteRegex(){
     return regEx;
 }
 
+function getPID(products){
+    let newPID;
+    while(true){
+        newPID = randomStr(uniqueIdLength);
+        let isSamePID = false;
+        for(let infoType of syncCategories){
+            for (productKey in products[infoType]) {
+                if(products[infoType][productKey]["pid"] == newPID){
+                    isSamePID = true;
+                    break;
+                }
+            }
+            if(isSamePID) break;
+        }
+        if(!isSamePID) break;
+    }
+    return newPID;
+}
 
+// Generate random string based on the input size
+function randomStr(length) {
+    var result           = '';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < length; i++ ) {
+       result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+ }
 
+/**
+ * Get all the local storage data
+ */
+function getStorageData(){
+    return new Promise(resolve => {
+    chrome.storage.local.get(storageItems, chromeData => {
+        return resolve(chromeData);
+    });
+    })
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// $.ajax({
-//     url: URL + path + "?url=" + link,
-//     timeout: 6000,
-//     tryCount: 0,
-//     retryLimit: 2,
-//     success: async function (productInfo) {
-//         console.log("Got the reply");
-//         console.log(productInfo);
-//     },
-//     error: function (xhr, textStatus, errorThrown) {
-//         if (textStatus == 'timeout') {
-//             this.tryCount++;
-//             if (this.tryCount <= this.retryLimit) {
-//                 //try again
-//                 console.log(`Remaining Retry: ${this.retryLimit - 1}`);
-//                 $.ajax(this);
-//                 return;
-//             } else {
-//                 alert(`Failed to add an item. Please try again: ${link}`);
-//                 console.log("AJAX time out");
-//             }
-//             return;
-//         }
-//     },
-// });
+/**
+ * Set the prodvided data to local storage
+ */
+function setStorageData(key, data){
+    return new Promise(resolve => {
+        let jsonObj = {};
+        jsonObj[key] = data;
+        chrome.storage.local.set(jsonObj, () => {
+            return resolve();
+        });
+    })
+}

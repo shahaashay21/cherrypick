@@ -42,7 +42,6 @@ const productInfo = function(req, res, next){
 
 const getInfo = function(req, res){
     const product = req.params.p;
-    logger.info(`Prduct name: ${product}`);
     const url = `https://www.walmart.com/search/?grid=false&query=${product}&sort=best_match`;
     let productsInfo = new Array();
     let totalItems = 3;
@@ -70,7 +69,8 @@ const getInfo = function(req, res){
             productsInfo[j]['productName'] = $(itemList[i]).find(".search-result-product-title > a > span").text();
             productsInfo[j]['ratings'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-avg-rating").text().trim();
             productsInfo[j]['reviews'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-review-count").text().trim();
-            productsInfo[j]['img'] = $(itemList[i]).find(".orientation-square").find("img").attr("src");
+            productsInfo[j]['img'] = $(itemList[i]).find("img").attr("src");
+            logger.info(`Image link: ${productsInfo[j]['img']}`);
             productsInfo[j]['index'] = j;
             j++;
         }
