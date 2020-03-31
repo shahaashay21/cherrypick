@@ -7,7 +7,7 @@ const productInitialization = {
     pending: new Array()
 };
 
-const syncCategories = ["saved", "recent"];
+const productStorageCategories = ["recent", "saved"];
 
 const uniqueIdLength = 7;
 
@@ -63,7 +63,10 @@ chrome.contextMenus.onClicked.addListener(function (clickedData) {
 })
 
 
-// Check basic URL validation then add a new product
+/**
+ * Check basic URL validation then add a new product
+ * @param {JSON} clickedData 
+ */
 async function newProductListner(clickedData) {
     if (clickedData.menuItemId == "cp-compare") {
         let pageUrl = clickedData.pageUrl;
@@ -78,7 +81,10 @@ async function newProductListner(clickedData) {
         }
     }
 }
-// Get product details from content script and then add it to the extension
+
+/**
+ * Get product details from content script and then add it to the extension
+ */
 function addNewProduct(){
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
         chrome.tabs.sendMessage(tabs[0].id, {action: "getProductDetails"}, async function(response) {
@@ -90,7 +96,10 @@ function addNewProduct(){
     });
 }
 
-// Add a new product in a pending list
+/**
+ * Add a new product in a pending list
+ * @param {String} link
+ */ 
 function addPendingProduct(link) {
     return new Promise(resolve => {
         chrome.storage.local.get(["products"], function (chromeData) {
@@ -103,7 +112,41 @@ function addPendingProduct(link) {
         return resolve();
     });
 }
-// Remove Pending Product Once Product Is Added
+
+// Remove or sync the product
+function syncOrRemoveProduct(action, pid){
+    return new Promise(async resolve => {
+        let chromeData = await getStorageData();
+        if (chromeData.products) {
+            let products = JSON.parse(chromeData.products);
+            for(let infoType of productStorageCategories){
+                if (products[infoType]) {
+                    if(action == "sync"){
+                        console.log(`PID: ${pid}`)
+                        let product = products[infoType].find(product => product.pid == pid);
+                        console.log("Sending product--");
+                        console.log(product);
+                        if(product){
+                            let productDetails = await compareProduct(product);
+                            await updateSuggestedProduct(product.name, product.owner, productDetails);
+                        }
+                    } else if(action == "remove"){
+                        products[infoType] = products[infoType].filter(product => product.pid != pid);
+                        await setStorageData("products", JSON.stringify(products));
+                    }
+                }
+            }
+            drawProducts();
+            return resolve();
+        }
+    });
+}
+
+/**
+ * Remove Pending Product Once Product Is Added
+ * @param {JSON} products 
+ * @param {String} productLink 
+ */
 function removePendingProduct(products, productLink){
     return new Promise(async resolve => {
         for(let i = 0; i < products.pending.length; i++){
@@ -111,15 +154,14 @@ function removePendingProduct(products, productLink){
                 products.pending.splice(i, 1);
             }
         }
-        // chrome.storage.local.set({ products: JSON.stringify(products) }, () => {
-        //     return resolve();
-        // });
         await setStorageData("products", JSON.stringify(products));
         return resolve();
     });
 }
 
-// List all the products in the extension HTML page
+/**
+ * List all the products in the extension HTML page
+ */
 async function drawProducts() {
     console.log("DrawProducts");
     let chromeData = await getStorageData();
@@ -130,7 +172,8 @@ async function drawProducts() {
         chrome.browserAction.setBadgeText({
             text: totalItems.toString()
         });
-        ["saved", "recent", "expired"].forEach(infoType => {
+        for(let infoType of productStorageCategories){
+        // ["saved", "recent", "expired"].forEach(infoType => {
             // Clear all the products first
             $(`#${infoType}Products`).html("");
             $(`#${infoType}SuggestedProducts`).html("");
@@ -150,30 +193,31 @@ async function drawProducts() {
                         if (!product.img) product.img = `../icons/img-not-available.png`;
 
                         newProduct =
-                            `<li class="media" id="${uniqueKey}" pid="${infoType}-${product.pid}" style="cursor: pointer;">` +
-                                `<img src="${product.img}" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="Product image not available">` +
-                                `<div class="media-body">` +
-                                    `<div style="max-width: 180px;">` +
-                                        `<div class="ellipses p-title" class="mt-0 mb-1">${product.name}</div>` +
-                                        `<div class="ellipses">${product.name}</div>` +
-                                        `<div style="display: flex;">` +
-                                            `<div style="width: 130px;">` +
-                                                `<div class="text-ellipses p-price">` +
-                                                    `Price: <span class="p-number">${product.price}</span>`+
-                                                `</div>` +
-                                                `<div class="text-ellipses p-rating">Ratings: <span class="p-number">${product.ratings}</span></div>` + 
-                                            `</div>` +
-                                            `<div>` +
-                                                `<img src="../icons/${ownerIcons[product.owner]}" alt="${product.owner}" height="36" width="40">` +
-                                            `</div>` +
-                                        `</div>` +
-                                    `</div>` +
-                                `</div>` +
-                            `</li>`;
+                            `<li class="media" id="${uniqueKey}" pid="${infoType}-${product.pid}" style="cursor: pointer;">
+                                <img src="${product.img}" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="Product image not available">
+                                <div class="media-body">
+                                    <div style="max-width: 180px;">
+                                        <div class="ellipses p-title" class="mt-0 mb-1">${product.name}</div>
+                                        <div class="ellipses">${product.name}</div>
+                                        <div style="display: flex;">
+                                            <div style="width: 130px;">
+                                                <div class="text-ellipses p-price">
+                                                    Price: <span class="p-number">${product.price}</span>
+                                                </div>
+                                                <div class="text-ellipses p-rating">Ratings: <span class="p-number">${product.ratings}</span></div>
+                                            </div>
+                                            <div>
+                                                <img src="../icons/${ownerIcons[product.owner]}" alt="${product.owner}" height="36" width="40">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>`;
                         $(`#${infoType}Products`).append(newProduct);
                     }
 
                     if (product && product.suggestions) {
+                        $(`#${infoType}SuggestedProducts`).append(getCompareProductsHeader(uniqueKey, product.pid));
                         product.suggestions.forEach(suggestedProduct => {
 
                             if (!suggestedProduct.price || suggestedProduct.price == -1 || suggestedProduct.price == "Not available"){
@@ -186,42 +230,83 @@ async function drawProducts() {
 
 
                             let suggestedProductHtml = 
-                                `<li class="media ${uniqueKey} suggestedProduct" style="cursor: pointer;" url="${suggestedProduct.productUrl}" owner="${suggestedProduct.owner}" name="${suggestedProduct.productName}">` +
-                                    `<img src="${suggestedProduct.img}" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="Product image not available">` +
-                                    `<div class="media-body">` +
-                                        `<div style="max-width: 320px;">` +
-                                            `<div class="ellipses p-title" class="mt-0 mb-1">${suggestedProduct.productName}</div>` +
-                                            `<div class="ellipses">${suggestedProduct.productName}</div>` +
-                                            `<div class="ps-card-footer">` +
-                                                `<div class="ps-price-ratings">` +
-                                                    `<div class="text-ellipses p-price">Price: <span class="p-number">${suggestedProduct.price}</span></div>` +
-                                                    `<div class="text-ellipses p-rating">Ratings: <span class="p-number">${suggestedProduct.ratings}</span></div>` +
-                                                `</div>` +
-                                                `<div class="ps-company-img">` +
-                                                    `<img src="../icons/${ownerIcons[suggestedProduct.owner]}" height="40" width="50" alt="company name">` +
-                                                `</div>` +
-                                            `</div>` +
-                                        `</div>` +
-                                    `</div>` +
-                                `</li>`;
+                                `<li class="media ${uniqueKey} suggestedProduct" style="cursor: pointer;" url="${suggestedProduct.productUrl}" owner="${suggestedProduct.owner}" name="${suggestedProduct.productName}">
+                                    <img src="${suggestedProduct.img}" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="Product image not available">
+                                    <div class="media-body">
+                                        <div style="max-width: 320px;">
+                                            <div class="ellipses p-title" class="mt-0 mb-1">${suggestedProduct.productName}</div>
+                                            <div class="ellipses">${suggestedProduct.productName}</div>
+                                            <div class="ps-card-footer">
+                                                <div class="ps-price-ratings">
+                                                    <div class="text-ellipses p-price">Price: <span class="p-number">${suggestedProduct.price}</span></div>
+                                                    <div class="text-ellipses p-rating">Ratings: <span class="p-number">${suggestedProduct.ratings}</span></div>
+                                                </div>
+                                                <div class="ps-company-img">
+                                                    <img src="../icons/${ownerIcons[suggestedProduct.owner]}" height="40" width="50" alt="company name">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>`;
                             $(`#${infoType}SuggestedProducts`).append(suggestedProductHtml);
                         })
                     }
                 };
             }
             setupJquery(`${infoType}`);
-        });
-        jqueryDisplaySelectedProduct();
+        }
+        setupJqueryAfterDrawProduct();
     }
 }
 
-// jQuery setup after displaying all the products
-function setupJquery(typeId){
-    jqueryDisplaySuggestedProducts(typeId);
+/**
+ * HTML tag of the header of compared products window to show sync, delete, etc. options
+ * @param {String} uniqueKey 
+ * @param {String} pid 
+ */
+function getCompareProductsHeader(uniqueKey, pid){
+    let headerHtml = `<nav class="navbar navbar-expand-sm bg-light border-bottom border-danger justify-content-end p-0 mb-3 px-2 ${uniqueKey} suggestedProduct">
+        <ul class="navbar-nav">
+        <li class="nav-item mx-3">
+            <span style="font-size: 1.5em; color: #28a745; cursor: pointer;" data-toggle="tooltip" data-placement="top" title="Compare products" class="syncProduct" pid="${pid}">
+                <i class="fas fa-sync-alt"></i>
+            </span>
+        </li>
+        <li class="nav-item mx-3">
+            <span style="font-size: 1.5em; color: #db2e2e; cursor: pointer" data-toggle="tooltip" data-placement="top" title="Remove" class="removeProduct" pid="${pid}">
+                <i class="fas fa-trash-alt"></i>
+            </span>
+        </li>
+        </ul>
+    </nav>`;
+    return headerHtml;
 }
 
-// After drawing the product details, set Jquery to open product's suggestions on click
+/**
+ * jQuery setup after displaying all the products of the individual category
+ * @param {String} typeId 
+ */
+function setupJquery(typeId){
+    jqueryDisplaySuggestedProducts(typeId);
+    $('[data-toggle="tooltip"]').tooltip();
+}
+
+/**
+ * jQuery setup after drawProducts complete
+ */
+function setupJqueryAfterDrawProduct(){
+    $(".tooltip").hide();
+    jqueryDisplaySelectedProduct();
+    jquerySyncAndRemoveFunc();
+}
+
+/**
+ * After drawing the product details, set Jquery to open product's suggestions on click
+ * Save recentClickedProduct before user clicks on the product so we can ignore the product to add into recent products
+ * @param {String} typeId 
+ */
 function jqueryDisplaySuggestedProducts(typeId){
+    // After drawing the product details, set Jquery to open product's suggestions on click
     $(`#${typeId}Products > li`).bind('click', function(){
         $(".suggestedProduct").hide();
         $("." + $(this).attr('id')).show();
@@ -229,6 +314,8 @@ function jqueryDisplaySuggestedProducts(typeId){
         $(this).addClass("active-product");
         chrome.storage.local.set({ lastSelectedId: $(this).attr('pid') });
     });
+
+    // Save recentClickedProduct before user clicks on the product so we can ignore the product to add into recent products
     $(`#${typeId}SuggestedProducts > li`).bind('click', async function(){
         // Add cookie with expiration time to ignore the current item from adding to the recent items
         await setStorageData("recentClickedProduct", JSON.stringify({owner: $(this).attr('owner'), name: $(this).attr('name')}));
@@ -236,6 +323,9 @@ function jqueryDisplaySuggestedProducts(typeId){
     });
 }
 
+/**
+ * Find last visited product by user and show the same product even after the update (drawProducts())
+ */
 function jqueryDisplaySelectedProduct(){
     chrome.storage.local.get(["lastSelectedId"], function (chromeData){
         let lastSelectedId = chromeData.lastSelectedId;
@@ -252,7 +342,25 @@ function jqueryDisplaySelectedProduct(){
     })
 }
 
-// Add a new product to an extension and update it if the product is already available
+/**
+ * jQuery to sync and delete product (individual) events
+ */
+function jquerySyncAndRemoveFunc(){
+    $(`.syncProduct`).bind('click', function(){
+        let pid = $(this).attr("pid");
+        syncOrRemoveProduct("sync", pid);
+    });
+    $(`.removeProduct`).bind('click', function(){
+        let pid = $(this).attr("pid");
+        syncOrRemoveProduct("remove", pid);
+    });
+}
+
+/**
+ * Add a new product to an extension and update (delete...insert) it if the product is already available
+ * @param {JSON} productInfo 
+ * @param {String} infoType 
+ */
 function addProductDetails(productInfo, infoType){
     return new Promise(resolve => {
         chrome.storage.local.get(["products", "defaultOptions"], async function (chromeData) {
@@ -304,144 +412,9 @@ function addProductDetails(productInfo, infoType){
 }
 
 /**
- * Iterate all the products and get suggested product if requires and update it 
- * @param {Boolean} checkSyncTime
- * If checkSyncTime is false then it will forcefully compare all products
+ * MESSAGE LISTNER
+ * 1. Get product details as soon as page is loaded
  */
-function compareAllProducts(checkSyncTime){
-    return new Promise(async resolve => {
-        let chromeData = await getStorageData();
-        if (chromeData.products) {
-            let products = JSON.parse(chromeData.products);
-            let defaultOptions = JSON.parse(chromeData.defaultOptions);
-            let isProductUpdated = 0;
-
-            for(let infoType of syncCategories){
-                if (products[infoType]) {
-                    for (productKey in products[infoType]) {
-                        let product = products[infoType][productKey];
-                        if (product && product.name && product.updatedTime) {
-                            if(!checkSyncTime || (checkSyncTime && ((Date.now() - product.updatedTime) / 1000) > defaultOptions.syncTimeLimit) || product.newProduct){ // If the product hasn't been updated since more than syncTimeLimit
-                                let productDetails = await compareProduct(product);
-                                await updateSuggestedProduct(product.name, product.owner, productDetails);
-                                isProductUpdated = 1;
-                                // console.log("Final product details");
-                                // console.log(productDetails);
-                            }
-                        }
-                    }
-                }
-            }
-            console.log("Sending back compareAllProducts");
-            return resolve(isProductUpdated);
-        }
-    });
-}
-
-
-/**
- * Get compared products from all the websites, update all the products and then return updated (suggested) products
- * @param {JSON} product 
- * @returns {JSON} All compared products details for the current provided product
- */
-function compareProduct(product){
-    return new Promise(async (resolve) => {
-        let allWebsitesRequests = allWebsites.filter(website => website != product.owner).map((website) => {
-            if(website != product.owner) return compareProductRequest(website, product.name)
-        });
-        let allWebsitesResponse = await Promise.all(allWebsitesRequests);
-        console.log(`compareProduct`);
-        console.log(allWebsitesResponse);
-        let allProducts = new Array();
-        for(let websiteResponse of allWebsitesResponse){
-            if(websiteResponse.error == 0){
-                if(websiteResponse.productsInfo){
-                    // console.log("PRODUCTS INFO");
-                    // console.log(websiteResponse.productsInfo);
-                    websiteResponse.productsInfo.forEach(productInfo => {
-                        if(productInfo.price && productInfo.productName){
-                            allProducts.push(productInfo);                            
-                        }
-                    });
-                }
-            }
-        }
-        allProducts.sort((a, b) => parseFloat(a.index) - parseFloat(b.index) );
-        resolve(allProducts);
-    });
-}
-
-// AJAX request to get products for comparison
-function compareProductRequest(compareAgainst, productName){
-    return new Promise(resolve => {
-        productName = productName.replace(/[^\x00-\x7F]/g, "");
-        productName = encodeURIComponent(productName);
-        let urlPath = URL + compareAgainst + "/products/" + productName;
-        $.ajax({
-            url: urlPath,
-            timeout: 6000,
-            tryCount: 0,
-            retryLimit: 2,
-            success: function (productInfo) {
-                console.log("Got the reply");
-                console.log(productInfo);
-                return resolve(productInfo);
-            },
-            error: function (xhr, textStatus, errorThrown) {
-                if (textStatus == 'timeout') {
-                    this.tryCount++;
-                    if (this.tryCount <= this.retryLimit) {
-                        //try again
-                        console.log(`Remaining Retry: ${this.retryLimit - 1}`);
-                        $.ajax(this);
-                    } else {
-                        // alert(`Failed to add an item. Please try again: ${urlPath}`);
-                        console.log("AJAX time out");
-                        return resolve({error: 1, message: textStatus});
-                    }
-                } else {
-                    return resolve({error: 1, message: textStatus});
-                }
-            },
-        });
-    });
-}
-
-// Add new suggested products
-function updateSuggestedProduct(productName, productOwner, productSuggestions){
-    return new Promise(resolve => {
-        chrome.storage.local.get(["products"], async function (chromeData) {
-            if (chromeData.products) {
-                let products = JSON.parse(chromeData.products);
-                for(let infoType of syncCategories){
-                    if (products[infoType]) {
-                        for (productKey in products[infoType]) {
-                            let product = products[infoType][productKey];
-                            if (product && product.name == productName && product.owner == productOwner) {
-                                product.newProduct = 0;
-                                product.updatedTime = Date.now();
-                                product.suggestions = productSuggestions;
-                                chrome.storage.local.set({ products: JSON.stringify(products) });                                
-                            }
-                        }
-                    }
-                };
-                resolve();
-            }
-        });
-    })
-}
-
-function compareAndDrawProducts(checkSyncTime){
-    return new Promise(async (resolve) => {
-        let isProductUpdated = await compareAllProducts(checkSyncTime);
-        if(isProductUpdated) drawProducts();
-        resolve();
-    });
-}
-
-// MESSAGE LISTNER
-// 1. Get product details as soon as page is loaded
 chrome.runtime.onMessage.addListener(async function (request, sender) {
     if (request.action == "initialProductInfo") {
         console.log("Initial Product Info");
@@ -460,6 +433,9 @@ chrome.runtime.onMessage.addListener(async function (request, sender) {
     }
 });
 
+/**
+ * Compare and draw products as soon as document is loaded
+ */
 $(document).ready(async (e) => {
     console.log("Testing");
     drawProducts();

@@ -49,7 +49,7 @@ function getPID(products){
     while(true){
         newPID = randomStr(uniqueIdLength);
         let isSamePID = false;
-        for(let infoType of syncCategories){
+        for(let infoType of productStorageCategories){
             for (productKey in products[infoType]) {
                 if(products[infoType][productKey]["pid"] == newPID){
                     isSamePID = true;

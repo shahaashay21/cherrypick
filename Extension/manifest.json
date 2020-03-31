@@ -19,7 +19,7 @@
   },
   "content_scripts": [
     {
-      "js": ["js/jquery-3.4.1.min.js", "js/helper.js", "js/webscrape.js"],
+      "js": ["js/lib/jquery-3.4.1.min.js", "js/helper.js", "js/webscrape.js"],
       "matches": ["<all_urls>"]
     }
   ],
