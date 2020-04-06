@@ -17,8 +17,9 @@ function compareAllProducts(checkSyncTime){
                         let product = products[infoType][productKey];
                         if (product && product.name && product.updatedTime) {
                             if(!checkSyncTime || (checkSyncTime && ((Date.now() - product.updatedTime) / 1000) > defaultOptions.syncTimeLimit) || product.newProduct){ // If the product hasn't been updated since more than syncTimeLimit
-                                let productDetails = await compareProduct(product);
-                                await updateSuggestedProduct(product.name, product.owner, productDetails);
+                                let comparedProductsDetails = await compareProduct(product);
+                                let updatedProductDetails = await getProductInfo(product);
+                                await updateSuggestedProduct(product.name, product.owner, comparedProductsDetails, updatedProductDetails);
                                 isProductUpdated = 1;
                                 // console.log("Final product details");
                                 // console.log(productDetails);
@@ -54,8 +55,9 @@ function compareProduct(product){
                     // console.log("PRODUCTS INFO");
                     // console.log(websiteResponse.productsInfo);
                     websiteResponse.productsInfo.forEach(productInfo => {
-                        if(productInfo.price && productInfo.productName){
-                            allProducts.push(productInfo);                            
+                        if(productInfo.price && productInfo.name){
+                            allProducts.push(productInfo);
+                            // Push the item and draw the product                       
                         }
                     });
                 }
@@ -106,13 +108,43 @@ function compareProductRequest(compareAgainst, productName){
     });
 }
 
+function getProductInfo(product){
+    return new Promise(resolve => {
+        let path = getAPIPath(product.link);
+        if (path) {
+            $.ajax({
+                url: URL + path + "?url=" + product.link,
+                success: function(productInfo) {
+                    console.log("Got the reply for product information");
+                    console.log(productInfo);
+                    if (typeof productInfo.error != "undefined" && productInfo.error == 0) {
+                        productInfo = productInfo.productInfo;
+                        var product = {};
+                        if(productInfo.owner) product["owner"] = productInfo.owner;
+                        if(productInfo.link) product["link"] = productInfo.link;
+                        if(productInfo.ratings) product["ratings"] = productInfo.ratings;
+                        if(productInfo.price) product["price"] = productInfo.price;
+                        if(productInfo.name) product["name"] = productInfo.name;
+                        if(productInfo.img) product["img"] = productInfo.img;
+                        return resolve(product);
+                    } else {
+                        return resolve();
+                    }
+                }
+            });
+        } else {
+            alert("Not supported right now :(");
+        }
+    })
+}
+
 /**
  * Add new suggested products
  * @param {String} productName 
  * @param {String} productOwner 
  * @param {JSON} productSuggestions 
  */
-function updateSuggestedProduct(productName, productOwner, productSuggestions){
+function updateSuggestedProduct(productName, productOwner, productSuggestions, updatedProductDetails){
     return new Promise(resolve => {
         chrome.storage.local.get(["products"], async function (chromeData) {
             if (chromeData.products) {
@@ -125,6 +157,13 @@ function updateSuggestedProduct(productName, productOwner, productSuggestions){
                                 product.newProduct = 0;
                                 product.updatedTime = Date.now();
                                 product.suggestions = productSuggestions;
+                                if(updatedProductDetails){
+                                    console.log("Updating product details");
+                                    if(updatedProductDetails.price) product.price = updatedProductDetails.price;
+                                    if(updatedProductDetails.ratings) product.ratings = updatedProductDetails.ratings;
+                                    if(updatedProductDetails.name) product.name = updatedProductDetails.name;
+                                    if(updatedProductDetails.img) product.img = updatedProductDetails.img;
+                                }
                                 chrome.storage.local.set({ products: JSON.stringify(products) });                                
                             }
                         }

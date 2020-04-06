@@ -15,16 +15,23 @@ const productInfo = function(req, res, next){
         
         productInfo['owner'] = "bestbuy";
         productInfo['price'] = $(".pricing-price.priceView-price").find(".priceView-hero-price.priceView-customer-price > span").first().text();
+        
         if(productInfo['price']){
-            productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/)[0].trim();
-            productInfo['price'] = productInfo['price'].replace(",","");
+            productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/);
+            if(productInfo['price'].length > 0){
+                productInfo['price'] = productInfo['price'][0].trim();
+                productInfo['price'] = productInfo['price'].replace(",","");
+            } else {
+                productInfo['price'] = -1;    
+            }
         } else {
             productInfo['price'] = -1;
         }
-        productInfo['title'] = $(".sku-title > h1").text().replace(/\\n/gm, "").trim();
+        
+        productInfo['name'] = $(".sku-title > h1").text().replace(/\\n/gm, "").trim();
         productInfo['ratings'] = $(".popover-wrapper").find(".c-reviews").find(".c-review-average").text().trim();
         productInfo['img'] = $(".shop-media-gallery").find(".thumbnail-list").find(".image-thumbnail").find("img").attr("src");
-        productInfo['url'] = url;
+        productInfo['link'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;
         
@@ -37,7 +44,7 @@ const productInfo = function(req, res, next){
     });
 };
 
-const getInfo = function(req, res){
+const getProducts = function(req, res){
     let product = req.params.p;
     const bestbuyMaxSearchChar = 90;
     product = product.substring(0, bestbuyMaxSearchChar);
@@ -59,9 +66,21 @@ const getInfo = function(req, res){
                 productsInfo[j] = {};
                 productsInfo[j]['owner'] = "bestbuy";
                 productsInfo[j]['price'] = $(itemList[i]).find(".price-block").find(".priceView-hero-price.priceView-customer-price > span").first().text();
-                productsInfo[j]['price'] = productsInfo[j]['price'].match(/([0-9]+\.*[0-9]*)/gm)[0].trim();
-                productsInfo[j]['productUrl'] = "http://bestbuy.com"+$(itemList[i]).find(".information").find(".sku-title").find("a").attr("href");
-                productsInfo[j]['productName'] = $(itemList[i]).find(".information").find(".sku-title").find("a").text();
+
+                if(productsInfo[j]['price']){
+                    productsInfo[j]['price'] = productsInfo[j]['price'].match(/([0-9,\.]+)/);
+                    if(productsInfo[j]['price'].length > 0){
+                        productsInfo[j]['price'] = productsInfo[j]['price'][0].trim();
+                        productsInfo[j]['price'] = productsInfo[j]['price'].replace(",","");
+                    } else {
+                        productsInfo[j]['price'] = -1;
+                    }
+                } else {
+                    productsInfo[j]['price'] = -1;
+                }
+
+                productsInfo[j]['link'] = "http://bestbuy.com"+$(itemList[i]).find(".information").find(".sku-title").find("a").attr("href");
+                productsInfo[j]['name'] = $(itemList[i]).find(".information").find(".sku-title").find("a").text();
                 productsInfo[j]['ratings'] = $(itemList[i]).find(".information").find(".ratings-reviews").find(".reviews-stats-list").find(".c-ratings-reviews-v2 > i").attr(`alt`).trim();
                 productsInfo[j]['img'] = $(itemList[i]).find(".image-column").find("img.product-image").attr("src");
                 productsInfo[j]['index'] = j;
@@ -80,4 +99,4 @@ const getInfo = function(req, res){
 }
 
 exports.productInfo = productInfo;
-exports.getInfo = getInfo;
+exports.getProducts = getProducts;

@@ -13,7 +13,7 @@ const uniqueIdLength = 7;
 
 const defaultOptions = {
     maxDefaultRecentProducts: 10,
-    syncTimeLimit: 600, //seconds
+    syncTimeLimit: 7200, //seconds
     addCPProductOnClick: false, // add product to recent tab if it is opened by clicking on the compare product section
     savedProductExpTime: 30, // Saved product expiration time in DAYS 
     ignoreRecentProduct: true
@@ -24,6 +24,8 @@ const ownerIcons = {
     "walmart": "walmart.png",
     "bestbuy": "bestbuy.png"
 }
+
+var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const allWebsites = ["amazon", "walmart", "bestbuy"]
 
@@ -124,11 +126,12 @@ function syncOrRemoveProduct(action, pid){
                     if(action == "sync"){
                         console.log(`PID: ${pid}`)
                         let product = products[infoType].find(product => product.pid == pid);
-                        console.log("Sending product--");
-                        console.log(product);
                         if(product){
+                            console.log("Sending product--");
+                            console.log(product);
                             let productDetails = await compareProduct(product);
-                            await updateSuggestedProduct(product.name, product.owner, productDetails);
+                            let updatedProductDetails = await getProductInfo(product);
+                            await updateSuggestedProduct(product.name, product.owner, productDetails, updatedProductDetails);
                         }
                     } else if(action == "remove"){
                         products[infoType] = products[infoType].filter(product => product.pid != pid);
@@ -217,39 +220,50 @@ async function drawProducts() {
                     }
 
                     if (product && product.suggestions) {
-                        $(`#${infoType}SuggestedProducts`).append(getCompareProductsHeader(uniqueKey, product.pid));
-                        product.suggestions.forEach(suggestedProduct => {
+                        $(`#${infoType}SuggestedProducts`).append(getCompareProductsHeader(uniqueKey, product.pid, product.updatedTime));
+                        if(product.suggestions.length > 0){
+                            product.suggestions.forEach(suggestedProduct => {
 
-                            if (!suggestedProduct.price || suggestedProduct.price == -1 || suggestedProduct.price == "Not available"){
-                                suggestedProduct.price = `Not available`;
-                            } else {
-                                suggestedProduct.price = `$${suggestedProduct.price}`;
-                            }
-                            if (!suggestedProduct.ratings) suggestedProduct.ratings = `Not available`;
-                            if (!suggestedProduct.img) suggestedProduct.img = `../icons/img-not-available.png`;
+                                if (!suggestedProduct.price || suggestedProduct.price == -1 || suggestedProduct.price == "Not available"){
+                                    suggestedProduct.price = `Not available`;
+                                } else {
+                                    suggestedProduct.price = `$${suggestedProduct.price}`;
+                                }
+                                if (!suggestedProduct.ratings) suggestedProduct.ratings = `Not available`;
+                                if (!suggestedProduct.img) suggestedProduct.img = `../icons/img-not-available.png`;
 
 
-                            let suggestedProductHtml = 
-                                `<li class="media ${uniqueKey} suggestedProduct" style="cursor: pointer;" url="${suggestedProduct.productUrl}" owner="${suggestedProduct.owner}" name="${suggestedProduct.productName}">
-                                    <img src="${suggestedProduct.img}" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="Product image not available">
-                                    <div class="media-body">
-                                        <div style="max-width: 320px;">
-                                            <div class="ellipses p-title" class="mt-0 mb-1">${suggestedProduct.productName}</div>
-                                            <div class="ellipses">${suggestedProduct.productName}</div>
-                                            <div class="ps-card-footer">
-                                                <div class="ps-price-ratings">
-                                                    <div class="text-ellipses p-price">Price: <span class="p-number">${suggestedProduct.price}</span></div>
-                                                    <div class="text-ellipses p-rating">Ratings: <span class="p-number">${suggestedProduct.ratings}</span></div>
-                                                </div>
-                                                <div class="ps-company-img">
-                                                    <img src="../icons/${ownerIcons[suggestedProduct.owner]}" height="40" width="50" alt="company name">
+                                let suggestedProductHtml = 
+                                    `<li class="media ${uniqueKey} suggestedProduct" style="cursor: pointer;" url="${suggestedProduct.link}" owner="${suggestedProduct.owner}" name="${suggestedProduct.name}">
+                                        <img src="${suggestedProduct.img}" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="Product image not available">
+                                        <div class="media-body">
+                                            <div style="max-width: 320px;">
+                                                <div class="ellipses p-title" class="mt-0 mb-1">${suggestedProduct.name}</div>
+                                                <div class="ellipses">${suggestedProduct.name}</div>
+                                                <div class="ps-card-footer">
+                                                    <div class="ps-price-ratings">
+                                                        <div class="text-ellipses p-price">Price: <span class="p-number">${suggestedProduct.price}</span></div>
+                                                        <div class="text-ellipses p-rating">Ratings: <span class="p-number">${suggestedProduct.ratings}</span></div>
+                                                    </div>
+                                                    <div class="ps-company-img">
+                                                        <img src="../icons/${ownerIcons[suggestedProduct.owner]}" height="40" width="50" alt="company name">
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </li>`;
+                                    </li>`;
+                                $(`#${infoType}SuggestedProducts`).append(suggestedProductHtml);
+                            })
+                        } else {
+                            // No products to compare
+                            let img = Math.floor(Math.random() * 4) + 1;
+                            let suggestedProductHtml = 
+                            `<li class="justify-content-center" style="display: grid;">
+                                <img src="../icons//dogs/${img}.png" height="200" width="200" style="margin-top: 10px;" class="mr-1" alt="...">
+                                <span>No products available to compare</span>
+                            </li>`;
                             $(`#${infoType}SuggestedProducts`).append(suggestedProductHtml);
-                        })
+                        }
                     }
                 };
             }
@@ -263,22 +277,36 @@ async function drawProducts() {
  * HTML tag of the header of compared products window to show sync, delete, etc. options
  * @param {String} uniqueKey 
  * @param {String} pid 
+ * @param {Date} updatedTime 
  */
-function getCompareProductsHeader(uniqueKey, pid){
-    let headerHtml = `<nav class="navbar navbar-expand-sm bg-light border-bottom border-danger justify-content-end p-0 mb-3 px-2 ${uniqueKey} suggestedProduct">
-        <ul class="navbar-nav">
-        <li class="nav-item mx-3">
-            <span style="font-size: 1.5em; color: #28a745; cursor: pointer;" data-toggle="tooltip" data-placement="top" title="Compare products" class="syncProduct" pid="${pid}">
-                <i class="fas fa-sync-alt"></i>
-            </span>
-        </li>
-        <li class="nav-item mx-3">
-            <span style="font-size: 1.5em; color: #db2e2e; cursor: pointer" data-toggle="tooltip" data-placement="top" title="Remove" class="removeProduct" pid="${pid}">
-                <i class="fas fa-trash-alt"></i>
-            </span>
-        </li>
-        </ul>
-    </nav>`;
+function getCompareProductsHeader(uniqueKey, pid, updatedTime){
+    let d = new Date(updatedTime);
+    let headerHtml = 
+    `<div class="container-fluid bg-light border-bottom border-danger p-0 mb-3 px-2 ${uniqueKey} suggestedProduct">
+        <div class="row">
+            <div class="col-sm-7">
+                <p style="margin-top: 18px;font-size: 0.8rem; color: darkgray;"> Last updated: ${months[d.getMonth()]} ${d.getDate()}, ${d.getHours()}:${d.getMinutes()}</p>
+            </div>
+            <div class="col-sm-5 p-0">
+                <nav class="navbar navbar-expand-sm justify-content-end">
+
+                    <ul class="navbar-nav">
+                    <li class="nav-item mx-2">
+                        <span style="font-size: 1.5em; color: #28a745; cursor: pointer;" data-toggle="tooltip" data-placement="top" title="Compare products" class="syncProduct" pid="${pid}">
+                            <i class="fas fa-sync-alt"></i>
+                        </span>
+                    </li>
+                    <li class="nav-item mx-2">
+                        <span style="font-size: 1.5em; color: #db2e2e; cursor: pointer" data-toggle="tooltip" data-placement="top" title="Remove" class="removeProduct" pid="${pid}">
+                            <i class="fas fa-trash-alt"></i>
+                        </span>
+                    </li>
+                    </ul>
+                
+                </nav>
+            </div>
+        </div>
+    </div>`;
     return headerHtml;
 }
 
@@ -297,7 +325,7 @@ function setupJquery(typeId){
 function setupJqueryAfterDrawProduct(){
     $(".tooltip").hide();
     jqueryDisplaySelectedProduct();
-    jquerySyncAndRemoveFunc();
+    jquerySyncOrRemoveFunc();
 }
 
 /**
@@ -345,9 +373,10 @@ function jqueryDisplaySelectedProduct(){
 /**
  * jQuery to sync and delete product (individual) events
  */
-function jquerySyncAndRemoveFunc(){
+function jquerySyncOrRemoveFunc(){
     $(`.syncProduct`).bind('click', function(){
         let pid = $(this).attr("pid");
+        $(this).find(".fas").addClass("fa-spin");
         syncOrRemoveProduct("sync", pid);
     });
     $(`.removeProduct`).bind('click', function(){
@@ -366,14 +395,14 @@ function addProductDetails(productInfo, infoType){
         chrome.storage.local.get(["products", "defaultOptions"], async function (chromeData) {
             let products = JSON.parse(chromeData.products);
             let defaultOptions = JSON.parse(chromeData.defaultOptions);
-            if (typeof productInfo != "undefined" && typeof productInfo.error != "undefined" && productInfo.error == 0 && productInfo.productInfo.title) {
+            if (typeof productInfo != "undefined" && typeof productInfo.error != "undefined" && productInfo.error == 0 && productInfo.productInfo.name) {
                 productInfo = productInfo.productInfo;
                 let newProduct = {};
                 newProduct["owner"] = productInfo.owner;
-                newProduct["link"] = productInfo.url;
+                newProduct["link"] = productInfo.link;
                 newProduct["ratings"] = productInfo.ratings;
                 newProduct["price"] = productInfo.price;
-                newProduct["name"] = productInfo.title;
+                newProduct["name"] = productInfo.name;
                 newProduct["img"] = productInfo.img;
                 newProduct["createdTime"] = Date.now();
                 newProduct["updatedTime"] = Date.now();
@@ -382,7 +411,7 @@ function addProductDetails(productInfo, infoType){
                 let sameProduct = await isSameProduct(products[infoType], newProduct);
                 if (sameProduct.isAvailable) { // remove same product before adding
                     products[infoType].splice(sameProduct.position, 1);
-                    console.log(`Product is already added to Cherry Pick: ${productInfo.url} `);
+                    console.log(`Product is already added to Cherry Pick: ${productInfo.link} `);
                 }
                 products[infoType].push(newProduct);
                 products[infoType].sort(function (a, b) { return b["createdTime"] - a["createdTime"] });
@@ -395,7 +424,7 @@ function addProductDetails(productInfo, infoType){
                 }
                 chrome.storage.local.set({ products: JSON.stringify(products) }, async () => {
                     drawProducts();
-                    // await removePendingProduct(products, productInfo.url);
+                    // await removePendingProduct(products, productInfo.link);
                     compareAndDrawProducts(true);
                     return resolve();
                 });
@@ -423,7 +452,7 @@ chrome.runtime.onMessage.addListener(async function (request, sender) {
         let defaultOptions = JSON.parse(chromeData.defaultOptions);
         if(defaultOptions.ignoreRecentProduct && chromeData.recentClickedProduct){
             let recentClickedProduct = JSON.parse(chromeData.recentClickedProduct);
-            if(request.source && request.source.productInfo && recentClickedProduct.owner != request.source.productInfo.owner && recentClickedProduct.name == request.source.productInfo.title){
+            if(request.source && request.source.productInfo && recentClickedProduct.owner != request.source.productInfo.owner && recentClickedProduct.name == request.source.productInfo.name){
                 addProductDetails(request.source, "recent");
             }
         } else {

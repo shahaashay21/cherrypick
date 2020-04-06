@@ -15,20 +15,27 @@ const productInfo = function(req, res, next){
 
         productInfo['owner'] = "walmart";
         productInfo['price'] = $(".product-atf").find(".prod-PriceSection").find(".prod-PriceHero").find(".price-group > .price-characteristic").attr("content");
+        
         if(productInfo['price']){
-            productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/)[0].trim();
-            productInfo['price'] = productInfo['price'].replace(",","");
+            productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/);
+            if(productInfo['price'].length > 0){
+                productInfo['price'] = productInfo['price'][0].trim();
+                productInfo['price'] = productInfo['price'].replace(",","");
+            } else {
+                productInfo['price'] = -1;    
+            }
         } else {
             productInfo['price'] = -1;
         }
-        productInfo['title'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
+        
+        productInfo['name'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
         productInfo['ratings'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=ratingValue]`).text().trim();
         productInfo['reviews'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=reviewCount]`).text().trim();
         productInfo['img'] = $(".prod-alt-image-wrapper").find(".slider-list").find("img").attr("src");
         if(productInfo['img']){
             productInfo['img'] = "https:" + productInfo['img'];
         }
-        productInfo['url'] = url;
+        productInfo['link'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;
 
@@ -41,7 +48,7 @@ const productInfo = function(req, res, next){
     });
 };
 
-const getInfo = function(req, res){
+const getProducts = function(req, res){
     const product = req.params.p;
     const url = `https://www.walmart.com/search/?grid=false&query=${product}&sort=best_match`;
     let productsInfo = new Array();
@@ -60,14 +67,21 @@ const getInfo = function(req, res){
             productsInfo[j] = {};
             productsInfo[j]['owner'] = "walmart";
             productsInfo[j]['price'] = $(itemList[i]).find(".price-main-block").find(".visuallyhidden").text();
-            let priceMatch = productsInfo[j]['price'].match(/([0-9]+\.*[0-9]*)/);
-            if(priceMatch && priceMatch.length > 0){
-                productsInfo[j]['price'] = priceMatch[0].trim();
+
+            if(productsInfo[j]['price']){
+                productsInfo[j]['price'] = productsInfo[j]['price'].match(/([0-9,\.]+)/);
+                if(productsInfo[j]['price'].length > 0){
+                    productsInfo[j]['price'] = productsInfo[j]['price'][0].trim();
+                    productsInfo[j]['price'] = productsInfo[j]['price'].replace(",","");
+                } else {
+                    productsInfo[j]['price'] = -1;
+                }
             } else {
-                productsInfo[j]['price'] = "Not available"
+                productsInfo[j]['price'] = -1;
             }
-            productsInfo[j]['productUrl'] = "http://walmart.com"+$(itemList[i]).find(".search-result-product-title > a").attr("href");
-            productsInfo[j]['productName'] = $(itemList[i]).find(".search-result-product-title > a > span").text();
+
+            productsInfo[j]['link'] = "http://walmart.com"+$(itemList[i]).find(".search-result-product-title > a").attr("href");
+            productsInfo[j]['name'] = $(itemList[i]).find(".search-result-product-title > a > span").text();
             productsInfo[j]['ratings'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-avg-rating").text().trim();
             productsInfo[j]['reviews'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-review-count").text().trim();
             productsInfo[j]['img'] = $(itemList[i]).find("img").attr("src");
@@ -87,4 +101,4 @@ const getInfo = function(req, res){
 }
 
 exports.productInfo = productInfo;
-exports.getInfo = getInfo;
+exports.getProducts = getProducts;

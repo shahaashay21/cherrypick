@@ -4,6 +4,6 @@ const bestbuy = require('../controllers/bestbuy.controller');
 
 router.get('/', bestbuy.productInfo);
 
-router.get('/products/:p', bestbuy.getInfo);
+router.get('/products/:p', bestbuy.getProducts);
 
 module.exports = router;
