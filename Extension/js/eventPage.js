@@ -1,48 +1,10 @@
-const URL = "http://localhost:3000/";
-// Initalize
-const productInitialization = {
-    recent: new Array(),
-    saved: new Array(),
-    expired: new Array(),
-    pending: new Array()
-};
-
-const productStorageCategories = ["recent", "saved"];
-
-const uniqueIdLength = 7;
-
-const defaultOptions = {
-    maxDefaultRecentProducts: 10,
-    syncTimeLimit: 7200, //seconds
-    addCPProductOnClick: false, // add product to recent tab if it is opened by clicking on the compare product section
-    savedProductExpTime: 30, // Saved product expiration time in DAYS 
-    ignoreRecentProduct: true
-}
-
-const ownerIcons = {
-    "amazon": "amazon.png",
-    "walmart": "walmart.png",
-    "bestbuy": "bestbuy.png"
-}
-
-var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-const allWebsites = ["amazon", "walmart", "bestbuy"]
-
-// Set cookie expiration time after 5 seconds
-const cookieExpirationTime = (new Date().getTime()/1000) + 5
-
-const storageItems = [
-    "products", "lastAccessed", "defaultOptions", "lastWindow", "lastSelectedId", "recentClickedProduct"
-]
-
 // Runs once in a lifetime when cherry pick is installed
 chrome.runtime.onInstalled.addListener(function () {
-    console.log("Welcome to Cherry-Pick");
+    log("Welcome to Cherry-Pick");
     chrome.storage.local.set({
-        products: JSON.stringify(productInitialization),
+        products: JSON.stringify(PRODUCT_INIT),
         lastAccessed: Date.now(),
-        defaultOptions: JSON.stringify(defaultOptions),
+        defaultOptions: JSON.stringify(DAFAULT_OPTIONS),
         lastWindow: "",
         lastSelectedId: "",
         recentClickedProduct: ""
@@ -90,8 +52,8 @@ async function newProductListner(clickedData) {
 function addNewProduct(){
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
         chrome.tabs.sendMessage(tabs[0].id, {action: "getProductDetails"}, async function(response) {
-            console.log("Got the product details to add to extension");
-            console.log(response);
+            log("Got the product details to add to extension");
+            log(response);
             await addProductDetails(response, "saved");
             await addProductDetails(response, "recent");
         });  
@@ -121,17 +83,15 @@ function syncOrRemoveProduct(action, pid){
         let chromeData = await getStorageData();
         if (chromeData.products) {
             let products = JSON.parse(chromeData.products);
-            for(let infoType of productStorageCategories){
+            for(let infoType of PRODUCT_STORAGE_CATEGORIES){
                 if (products[infoType]) {
                     if(action == "sync"){
-                        console.log(`PID: ${pid}`)
+                        log(`PID: ${pid}`)
                         let product = products[infoType].find(product => product.pid == pid);
                         if(product){
-                            console.log("Sending product--");
-                            console.log(product);
-                            let productDetails = await compareProduct(product);
-                            let updatedProductDetails = await getProductInfo(product);
-                            await updateSuggestedProduct(product.name, product.owner, productDetails, updatedProductDetails);
+                            log("Sending product--");
+                            log(product);
+                            await updateProductAndSuggestions(product);
                         }
                     } else if(action == "remove"){
                         products[infoType] = products[infoType].filter(product => product.pid != pid);
@@ -166,7 +126,7 @@ function removePendingProduct(products, productLink){
  * List all the products in the extension HTML page
  */
 async function drawProducts() {
-    console.log("DrawProducts");
+    log("DrawProducts");
     let chromeData = await getStorageData();
     if (chromeData.products) {
         products = JSON.parse(chromeData.products);
@@ -175,14 +135,14 @@ async function drawProducts() {
         chrome.browserAction.setBadgeText({
             text: totalItems.toString()
         });
-        for(let infoType of productStorageCategories){
+        for(let infoType of PRODUCT_STORAGE_CATEGORIES){
         // ["saved", "recent", "expired"].forEach(infoType => {
             // Clear all the products first
             $(`#${infoType}Products`).html("");
             $(`#${infoType}SuggestedProducts`).html("");
             if (products[infoType]) {
                 for (productKey in products[infoType]) {
-                    console.log(`Product key: ${productKey}`);
+                    log(`Product key: ${productKey}`);
                     let uniqueKey = `${infoType}-${productKey}`;
                     let product = products[infoType][productKey];
                     if (product && product.name) {
@@ -210,7 +170,7 @@ async function drawProducts() {
                                                 <div class="text-ellipses p-rating">Ratings: <span class="p-number">${product.ratings}</span></div>
                                             </div>
                                             <div>
-                                                <img src="../icons/${ownerIcons[product.owner]}" alt="${product.owner}" height="36" width="40">
+                                                <img src="../icons/${OWNER_ICONS[product.owner]}" alt="${product.owner}" height="36" width="40">
                                             </div>
                                         </div>
                                     </div>
@@ -218,9 +178,9 @@ async function drawProducts() {
                             </li>`;
                         $(`#${infoType}Products`).append(newProduct);
                     }
-
+                    
                     if (product && product.suggestions) {
-                        $(`#${infoType}SuggestedProducts`).append(getCompareProductsHeader(uniqueKey, product.pid, product.updatedTime));
+                        $(`#${infoType}SuggestedProducts`).append(getCompareProductsHeader(uniqueKey, product.pid, product.updatedTime, product.isLoading));
                         if(product.suggestions.length > 0){
                             product.suggestions.forEach(suggestedProduct => {
 
@@ -246,7 +206,7 @@ async function drawProducts() {
                                                         <div class="text-ellipses p-rating">Ratings: <span class="p-number">${suggestedProduct.ratings}</span></div>
                                                     </div>
                                                     <div class="ps-company-img">
-                                                        <img src="../icons/${ownerIcons[suggestedProduct.owner]}" height="40" width="50" alt="company name">
+                                                        <img src="../icons/${OWNER_ICONS[suggestedProduct.owner]}" height="40" width="50" alt="company name">
                                                     </div>
                                                 </div>
                                             </div>
@@ -258,7 +218,7 @@ async function drawProducts() {
                             // No products to compare
                             let img = Math.floor(Math.random() * 4) + 1;
                             let suggestedProductHtml = 
-                            `<li class="justify-content-center" style="display: grid;">
+                            `<li class="justify-content-center ${uniqueKey} suggestedProduct" style="display: grid;">
                                 <img src="../icons//dogs/${img}.png" height="200" width="200" style="margin-top: 10px;" class="mr-1" alt="...">
                                 <span>No products available to compare</span>
                             </li>`;
@@ -279,13 +239,15 @@ async function drawProducts() {
  * @param {String} pid 
  * @param {Date} updatedTime 
  */
-function getCompareProductsHeader(uniqueKey, pid, updatedTime){
+function getCompareProductsHeader(uniqueKey, pid, updatedTime, isLoading){
     let d = new Date(updatedTime);
+    let isLoadingClass = "";
+    if(isLoading) isLoadingClass = "fa-spin";
     let headerHtml = 
     `<div class="container-fluid bg-light border-bottom border-danger p-0 mb-3 px-2 ${uniqueKey} suggestedProduct">
         <div class="row">
             <div class="col-sm-7">
-                <p style="margin-top: 18px;font-size: 0.8rem; color: darkgray;"> Last updated: ${months[d.getMonth()]} ${d.getDate()}, ${d.getHours()}:${d.getMinutes()}</p>
+                <p style="margin-top: 18px;font-size: 0.8rem; color: darkgray;"> Last updated: ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getHours()}:${d.getMinutes()}</p>
             </div>
             <div class="col-sm-5 p-0">
                 <nav class="navbar navbar-expand-sm justify-content-end">
@@ -293,7 +255,7 @@ function getCompareProductsHeader(uniqueKey, pid, updatedTime){
                     <ul class="navbar-nav">
                     <li class="nav-item mx-2">
                         <span style="font-size: 1.5em; color: #28a745; cursor: pointer;" data-toggle="tooltip" data-placement="top" title="Compare products" class="syncProduct" pid="${pid}">
-                            <i class="fas fa-sync-alt"></i>
+                            <i class="fas fa-sync-alt ${isLoadingClass}"></i>
                         </span>
                     </li>
                     <li class="nav-item mx-2">
@@ -376,7 +338,6 @@ function jqueryDisplaySelectedProduct(){
 function jquerySyncOrRemoveFunc(){
     $(`.syncProduct`).bind('click', function(){
         let pid = $(this).attr("pid");
-        $(this).find(".fas").addClass("fa-spin");
         syncOrRemoveProduct("sync", pid);
     });
     $(`.removeProduct`).bind('click', function(){
@@ -407,11 +368,12 @@ function addProductDetails(productInfo, infoType){
                 newProduct["createdTime"] = Date.now();
                 newProduct["updatedTime"] = Date.now();
                 newProduct["newProduct"] = 1; // 1 to get the product suggestions
+                newProduct["isLoading"] = 0;
                 newProduct["pid"] = getPID(products);
                 let sameProduct = await isSameProduct(products[infoType], newProduct);
                 if (sameProduct.isAvailable) { // remove same product before adding
                     products[infoType].splice(sameProduct.position, 1);
-                    console.log(`Product is already added to Cherry Pick: ${productInfo.link} `);
+                    log(`Product is already added to Cherry Pick: ${productInfo.link} `);
                 }
                 products[infoType].push(newProduct);
                 products[infoType].sort(function (a, b) { return b["createdTime"] - a["createdTime"] });
@@ -425,14 +387,14 @@ function addProductDetails(productInfo, infoType){
                 chrome.storage.local.set({ products: JSON.stringify(products) }, async () => {
                     drawProducts();
                     // await removePendingProduct(products, productInfo.link);
-                    compareAndDrawProducts(true);
+                    compareAllProducts(true);
                     return resolve();
                 });
             } else {
                 if(typeof productInfo != "undefined" &&productInfo.error == 1){
-                    console.log(productInfo.message);
+                    log(productInfo.message);
                 } else {
-                    console.log("Couldn't get the product information");
+                    log("Couldn't get the product information");
                 }
                 return resolve();
             }
@@ -446,8 +408,8 @@ function addProductDetails(productInfo, infoType){
  */
 chrome.runtime.onMessage.addListener(async function (request, sender) {
     if (request.action == "initialProductInfo") {
-        console.log("Initial Product Info");
-        console.log(request.source);
+        log("Initial Product Info");
+        log(request.source);
         let chromeData = await getStorageData();
         let defaultOptions = JSON.parse(chromeData.defaultOptions);
         if(defaultOptions.ignoreRecentProduct && chromeData.recentClickedProduct){
@@ -466,10 +428,10 @@ chrome.runtime.onMessage.addListener(async function (request, sender) {
  * Compare and draw products as soon as document is loaded
  */
 $(document).ready(async (e) => {
-    console.log("Testing");
+    log("Testing");
     drawProducts();
     $(".ex").click(async (e) => {
-        await compareAndDrawProducts(false);
+        await compareAllProducts(false);
     });
-    await compareAndDrawProducts(true);
+    await compareAllProducts(true);
 });

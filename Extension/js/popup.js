@@ -13,7 +13,7 @@ function openLastWindow(){
             }
             $(".windowTitle").click(function() {
                 let windowName = $(this).attr("openWindow");
-                console.log(windowName);
+                log(windowName);
                 openWindow(windowName)
             });
         }); 

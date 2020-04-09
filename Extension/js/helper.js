@@ -47,9 +47,9 @@ function supportedSiteRegex(){
 function getPID(products){
     let newPID;
     while(true){
-        newPID = randomStr(uniqueIdLength);
+        newPID = randomStr(UNIQUE_ID_LENGTH);
         let isSamePID = false;
-        for(let infoType of productStorageCategories){
+        for(let infoType of PRODUCT_STORAGE_CATEGORIES){
             for (productKey in products[infoType]) {
                 if(products[infoType][productKey]["pid"] == newPID){
                     isSamePID = true;
@@ -79,7 +79,7 @@ function randomStr(length) {
  */
 function getStorageData(){
     return new Promise(resolve => {
-    chrome.storage.local.get(storageItems, chromeData => {
+    chrome.storage.local.get(STORAGE_ITEMS, chromeData => {
         return resolve(chromeData);
     });
     })
@@ -96,4 +96,76 @@ function setStorageData(key, data){
             return resolve();
         });
     })
+}
+
+/**
+ * return an array of unique products sorted by new product and updated time
+ */
+function getUniqueProducts(){
+    return new Promise(async resolve => {
+        let chromeData = await getStorageData();
+        let unique = new Array();
+        if (chromeData.products) {
+            let products = JSON.parse(chromeData.products);
+
+            // Concat all the products
+            for(let infoType of PRODUCT_STORAGE_CATEGORIES){
+                if (products[infoType]) {
+                    unique = unique.concat(products[infoType]);
+                }
+            }
+
+            // Sort the products based on new product and updated time
+            unique.sort((a, b) => {
+                if(a.newProduct == b.newProduct) return (a.updatedTime < b.updatedTime) ? 1 : -1;
+                return (a.newProduct > b.newProduct) ? 1 : -1;
+            });
+
+            // Filter the product based on the same owner:productName:link
+            let tempUniqueMap = new Map();
+            unique = unique.filter(product => {
+                let val = tempUniqueMap.get(`${product.owner}:${product.name}:${product.link}`);
+                if(!val){
+                    tempUniqueMap.set(`${product.owner}:${product.name}:${product.link}`, product.name);
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+        }
+        return resolve(unique);
+    });
+}
+
+/**
+ * 
+ * @param {JSON} productObject 
+ * @param {String} key 
+ * @param {String} value 
+ */
+function updateProductData(productObject, key, value){
+    return new Promise(resolve => {
+        chrome.storage.local.get(["products"], async function (chromeData) {
+            if (chromeData.products) {
+                let products = JSON.parse(chromeData.products);
+                for(let infoType of PRODUCT_STORAGE_CATEGORIES){
+                    if (products[infoType]) {
+                        for (productKey in products[infoType]) {
+                            let product = products[infoType][productKey];
+                            if (product && product.name == productObject.name && product.owner == productObject.owner && product.link == productObject.link) {
+                                product[key] = value;
+                                chrome.storage.local.set({ products: JSON.stringify(products) });                                
+                            }
+                        }
+                    }
+                };
+                resolve();
+            }
+        });
+    })
+}
+
+function log(message, showAlways = false){
+    let d = new Date();
+    if(DEBUG || showAlways) console.log(`${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}::: ${message}`);
 }

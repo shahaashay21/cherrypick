@@ -1,7 +1,7 @@
 let finalData;
-console.log("jQuery");
+log("jQuery");
 $(document).ready(function(){
-    console.log($);
+    log($);
 });
 
 async function readDom(){
@@ -55,7 +55,7 @@ function webscrap(){
                 productInfo = await getBestbuyProduct();
                 break;
             default:
-                console.log("Current website is not supported yet");
+                log("Current website is not supported yet");
                 productInfo["error"] = 1;
                 productInfo["message"] = "Current website is not supported yet";
         }
@@ -154,7 +154,7 @@ function getBestbuyProduct(){
         } else {
             productInfo['price'] = -1;
         }
-        
+
         productInfo['name'] = $(".sku-title > h1").text().replace(/\\n/gm, "").trim();
         productInfo['ratings'] = $(".popover-wrapper").find(".c-reviews").find(".c-review-average").text().trim();
         productInfo['img'] = $(".shop-media-gallery").find(".thumbnail-list").find(".image-thumbnail").find("img").attr("src");
