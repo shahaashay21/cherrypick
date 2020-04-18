@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const bestbuy = require('../controllers/bestbuy.controller');
+const bestbuy = require('../controllers/bestbuy_controller');
 
 router.get('/', bestbuy.productInfo);
 

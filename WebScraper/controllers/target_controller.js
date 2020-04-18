@@ -4,43 +4,77 @@ var logger = require('../utils/winston');
 var stringSimilarity = require('string-similarity');
 
 const productInfo = function(req, res, next){
+
+
+
     const url = req.query.url;
     let productInfo = {};
     let response = {};
 
     const start = Date.now();
     axios.get(url).then((html) => {
+        // logger.info(html.data);
         const takenTime = Date.now() - start;
-        logger.info(`Time taken to get Walmart information: ${takenTime} and URL: ${url}`);
+        logger.info(`Time taken to get Target information: ${takenTime} and URL: ${url}`);
         let $ = cheerio.load(html.data);
 
-        productInfo['owner'] = "walmart";
-        productInfo['price'] = $(".product-atf").find(".prod-PriceSection").find(".prod-PriceHero").find(".price-group > .price-characteristic").attr("content");
-        
-        if(productInfo['price']){
-            productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/);
-            if(productInfo['price'].length > 0){
-                productInfo['price'] = productInfo['price'][0].trim();
-                productInfo['price'] = productInfo['price'].replace(",","");
-            } else {
-                productInfo['price'] = -1;    
+        let targetApiKey = "";
+        let targetApiKeyMatch = html.data.match(/"apiKey":"(.*?)",/);
+        if(targetApiKeyMatch.length == 2){
+            targetApiKey = targetApiKeyMatch[1];
+        }
+
+        let jsObject = html.data.match(/type="application\/ld\+json">(.*?)<\/script>/);
+        if(jsObject.length == 2){
+            jsObject = jsObject[1];
+        }
+        jsObject = JSON.parse(jsObject);
+
+        productInfo['owner'] = "target";
+
+        if(jsObject["@graph"]){
+            let productObj = jsObject["@graph"][0];
+            if(productObj){
+                productInfo['name'] = productObj["name"];
+                productInfo['img'] = productObj["image"];
+                productInfo['sku'] = productObj["sku"];
+                productInfo['ratings'] = productObj["aggregateRating"]["ratingValue"];
+                productInfo['reviews'] = productObj["aggregateRating"]["reviewCount"];
             }
-        } else {
-            productInfo['price'] = -1;
         }
+        let priceUrl = `https://redsky.target.com/web/pdp_location/v1/tcin/${productInfo["sku"]}?pricing_store_id=2088&key=${targetApiKey}`;
+        logger.info(`Target: priceUrl: ${priceUrl}`);
+        axios.get(priceUrl).then((jsonResponse) => {
+            jsonResponse = jsonResponse.data;
+            if(jsonResponse["price"]){
+                if(jsonResponse["price"]["current_retail"]) productInfo['price'] = jsonResponse["price"]["current_retail"];
+                if(jsonResponse["price"]["current_retail_min"]) productInfo['price'] = jsonResponse["price"]["current_retail_min"];
+            }
+            
+            if(!productInfo['price']){
+                productInfo['price'] = -1;
+            }
 
-        productInfo['name'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
-        productInfo['ratings'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=ratingValue]`).text().trim();
-        productInfo['reviews'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=reviewCount]`).text().trim();
-        productInfo['img'] = $(".prod-alt-image-wrapper").find(".slider-list").find("img").attr("src");
-        if(productInfo['img']){
-            productInfo['img'] = "https:" + productInfo['img'];
-        }
-        productInfo['link'] = url;
-        response['error'] = 0;
-        response['productInfo'] = productInfo;
+            if(!productInfo['name']) productInfo['name'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
+            if(!productInfo['ratings'] || productInfo['reviews']){
+                let reviewRatings = $(`[data-test=ratings]`).find(`.h-sr-only`).html().trim().match(/(\d\.*\d*) out of (\d\.*\d*) stars with (\d+)* reviews/);
+                if(reviewRatings.length == 4){
+                    productInfo['ratings'] = reviewRatings[1];
+                    productInfo['reviews'] = reviewRatings[3];
+                }
+            }
+            if(!productInfo['img']) productInfo['img'] = $(".slideDeckPicture").find("img").attr("src");
+            productInfo['link'] = url;
+            response['error'] = 0;
+            response['productInfo'] = productInfo;
 
-        res.json(response);
+            res.json(response);
+        }).catch (function (e) {
+            logger.error(e.message);
+            response['error'] = 1;
+            response['message'] = e.message;
+            res.json(response);
+        });
     }).catch (function (e) {
         logger.error(e.message);
         response['error'] = 1;

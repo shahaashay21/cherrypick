@@ -1,6 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 var logger = require('../utils/winston');
+var stringSimilarity = require('string-similarity');
 
 const productInfo = function(req, res, next){
     const url = req.query.url;
@@ -27,7 +28,7 @@ const productInfo = function(req, res, next){
         } else {
             productInfo['price'] = -1;
         }
-        
+
         productInfo['name'] = $(".sku-title > h1").text().replace(/\\n/gm, "").trim();
         productInfo['ratings'] = $(".popover-wrapper").find(".c-reviews").find(".c-review-average").text().trim();
         productInfo['img'] = $(".shop-media-gallery").find(".thumbnail-list").find(".image-thumbnail").find("img").attr("src");
@@ -64,6 +65,7 @@ const getProducts = function(req, res){
             if(isProduct){
                 totalItems--;
                 productsInfo[j] = {};
+                productsInfo[j]['match'] = 0; // Initialize
                 productsInfo[j]['owner'] = "bestbuy";
                 productsInfo[j]['price'] = $(itemList[i]).find(".price-block").find(".priceView-hero-price.priceView-customer-price > span").first().text();
 
@@ -81,6 +83,7 @@ const getProducts = function(req, res){
 
                 productsInfo[j]['link'] = "http://bestbuy.com"+$(itemList[i]).find(".information").find(".sku-title").find("a").attr("href");
                 productsInfo[j]['name'] = $(itemList[i]).find(".information").find(".sku-title").find("a").text();
+                productsInfo[j]['match'] = stringSimilarity.compareTwoStrings(product.toLowerCase(), productsInfo[j]['name'].toLowerCase());
                 productsInfo[j]['ratings'] = $(itemList[i]).find(".information").find(".ratings-reviews").find(".reviews-stats-list").find(".c-ratings-reviews-v2 > i").attr(`alt`).trim();
                 productsInfo[j]['img'] = $(itemList[i]).find(".image-column").find("img.product-image").attr("src");
                 productsInfo[j]['index'] = j;

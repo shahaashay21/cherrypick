@@ -117,8 +117,8 @@ function getUniqueProducts(){
 
             // Sort the products based on new product and updated time
             unique.sort((a, b) => {
-                if(a.newProduct == b.newProduct) return (a.updatedTime < b.updatedTime) ? 1 : -1;
-                return (a.newProduct > b.newProduct) ? 1 : -1;
+                if(a.newProduct == b.newProduct) return (a.updatedTime - b.updatedTime);
+                return (b.newProduct - a.newProduct);
             });
 
             // Filter the product based on the same owner:productName:link
@@ -143,7 +143,7 @@ function getUniqueProducts(){
  * @param {String} key 
  * @param {String} value 
  */
-function updateProductData(productObject, key, value){
+function updateProductData(productObject, key, value, all = false){
     return new Promise(resolve => {
         chrome.storage.local.get(["products"], async function (chromeData) {
             if (chromeData.products) {
@@ -152,13 +152,13 @@ function updateProductData(productObject, key, value){
                     if (products[infoType]) {
                         for (productKey in products[infoType]) {
                             let product = products[infoType][productKey];
-                            if (product && product.name == productObject.name && product.owner == productObject.owner && product.link == productObject.link) {
+                            if (product && ((productObject && product.name == productObject.name && product.owner == productObject.owner && product.link == productObject.link) || all)) {
                                 product[key] = value;
-                                chrome.storage.local.set({ products: JSON.stringify(products) });                                
                             }
                         }
                     }
                 };
+                chrome.storage.local.set({ products: JSON.stringify(products) });
                 resolve();
             }
         });

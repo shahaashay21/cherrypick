@@ -1,51 +1,3 @@
-// /**
-//  * Iterate all the products and get suggested product if requires and update it 
-//  * @param {Boolean} checkSyncTime
-//  * If checkSyncTime is false then it will forcefully compare all products
-//  */
-// function compareAllProducts(checkSyncTime){
-//     return new Promise(async resolve => {
-//         let chromeData = await getStorageData();
-//         if (chromeData.products) {
-//             let products = JSON.parse(chromeData.products);
-//             let defaultOptions = JSON.parse(chromeData.defaultOptions);
-
-//             for(let infoType of productStorageCategories){
-//                 if (products[infoType]) {
-//                     let updateProductPromise = new Array();
-                    // for (productKey in products[infoType]) {
-                    //     let product = products[infoType][productKey];
-                    //     if (product && product.name && product.updatedTime && !product.isLoading) {
-                    //         if(!checkSyncTime || (checkSyncTime && ((Date.now() - product.updatedTime) / 1000) > defaultOptions.syncTimeLimit) || product.newProduct){ // If the product hasn't been updated since more than syncTimeLimit
-                    //             log("Adding products to ALL PROMISE");
-                    //             updateProductPromise.push(updateProductAndSuggestions(product));
-                    //             if(updateProductPromise.length >= 2){
-                    //                 log("UPDATING ALL PRODUCTS PROMISE");
-                    //                 await Promise.all(updateProductPromise);
-                    //                 log("DONE UPDATING ALL PRODUCTS PROMISE");
-                    //                 updateProductPromise = new Array();
-                    //                 drawProducts();
-                    //             }
-                    //             // await updateProductAndSuggestions(product);
-                    //             // drawProducts();
-                    //         }
-                    //     }
-                    // }
-                    // if(updateProductPromise.length > 0){
-                    //     log("UPDATING ALL PRODUCTS PROMISE");
-                    //     await Promise.all(updateProductPromise);
-                    //     log("DONE UPDATING ALL PRODUCTS PROMISE");
-                    //     drawProducts();
-                    // }
-//                 }
-//             }
-//             log("Sending back compareAllProducts");
-//             return resolve();
-//         }
-//     });
-// }
-
-
 /**
  * Iterate all the products and get suggested product if requires and update it 
  * @param {Boolean} checkSyncTime
@@ -128,7 +80,7 @@ function compareProduct(product){
                 }
             }
         }
-        allProducts.sort((a, b) => parseFloat(a.index) - parseFloat(b.index) );
+        allProducts.sort((a, b) => parseFloat(b.match) - parseFloat(a.match) );
         resolve(allProducts);
     });
 }

@@ -1,6 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 var logger = require('../utils/winston');
+var stringSimilarity = require('string-similarity');
 
 const productInfo = function(req, res, next){
     const url = req.query.url;
@@ -27,7 +28,7 @@ const productInfo = function(req, res, next){
         } else {
             productInfo['price'] = -1;
         }
-        
+
         productInfo['name'] = $("#productTitle").text();
         productInfo['name'] = productInfo['name'].replace(/\\n/gm, "").trim();
         if($(".reviewCountTextLinkedHistogram").attr("name")){
@@ -68,6 +69,7 @@ const getProducts = function(req, res){
             if(sponsoredProduct.length == 0 && adviserProducts.length == 0){
                 totalItems--;
                 productsInfo[j] = {};
+                productsInfo[j]['match'] = 0; // Initialize
                 productsInfo[j]['owner'] = "amazon";
                 productsInfo[j]['price'] = $(itemList[i]).find(".a-price > .a-offscreen").html();
 
@@ -88,6 +90,7 @@ const getProducts = function(req, res){
                 productsInfo[j]['name'] = $(itemList[i]).find("a.a-link-normal.a-text-normal > span");
                 if(productsInfo[j]['name']){
                     productsInfo[j]['name'] = productsInfo[j]['name'].first().text();
+                    productsInfo[j]['match'] = stringSimilarity.compareTwoStrings(product.toLowerCase(), productsInfo[j]['name'].toLowerCase());
                 }
                 productsInfo[j]['ratings'] = $(itemList[i]).find(".a-popover-trigger").text();
                 if(productsInfo[j]['ratings']){

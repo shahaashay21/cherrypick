@@ -1,3 +1,17 @@
+/**
+ * Initialize loggly for logging FE
+ */
+var _LTracker = _LTracker || [];
+    _LTracker.push({'logglyKey': '7c2fbce1-2a3d-4a7f-a885-cf068ee22a98',
+    'sendConsoleErrors' : true,
+    'tag' : 'loggly-jslogger'  });
+
+_LTracker.push('Hello World');
+
+// Sentry to get error details and messages to the sentry cloud and email notification
+Sentry.init({ dsn: 'https://c66ccb3db7044b17bacf1f1f870a22b4@o376556.ingest.sentry.io/5197470' });
+
+
 // Runs once in a lifetime when cherry pick is installed
 chrome.runtime.onInstalled.addListener(function () {
     log("Welcome to Cherry-Pick");
@@ -52,10 +66,8 @@ async function newProductListner(clickedData) {
 function addNewProduct(){
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
         chrome.tabs.sendMessage(tabs[0].id, {action: "getProductDetails"}, async function(response) {
-            log("Got the product details to add to extension");
-            log(response);
             await addProductDetails(response, "saved");
-            await addProductDetails(response, "recent");
+            // await addProductDetails(response, "recent");
         });  
     });
 }
@@ -78,7 +90,7 @@ function addPendingProduct(link) {
 }
 
 // Remove or sync the product
-function syncOrRemoveProduct(action, pid){
+function syncOrRemoveOrSaveProduct(action, pid){
     return new Promise(async resolve => {
         let chromeData = await getStorageData();
         if (chromeData.products) {
@@ -96,6 +108,14 @@ function syncOrRemoveProduct(action, pid){
                     } else if(action == "remove"){
                         products[infoType] = products[infoType].filter(product => product.pid != pid);
                         await setStorageData("products", JSON.stringify(products));
+                    } else if(action == "save"){
+                        let product = products[infoType].find(product => product.pid == pid);
+                        if(product){
+                            let newProductInfo = {};
+                            newProductInfo["error"] = 0;
+                            newProductInfo["productInfo"] = { ...product };
+                            await addProductDetails(newProductInfo, "saved");
+                        }
                     }
                 }
             }
@@ -135,6 +155,7 @@ async function drawProducts() {
         chrome.browserAction.setBadgeText({
             text: totalItems.toString()
         });
+        if(totalItems > 0) $("#savedWindowTitle").html(`Saved (${totalItems.toString()})`);
         for(let infoType of PRODUCT_STORAGE_CATEGORIES){
         // ["saved", "recent", "expired"].forEach(infoType => {
             // Clear all the products first
@@ -180,7 +201,7 @@ async function drawProducts() {
                     }
                     
                     if (product && product.suggestions) {
-                        $(`#${infoType}SuggestedProducts`).append(getCompareProductsHeader(uniqueKey, product.pid, product.updatedTime, product.isLoading));
+                        $(`#${infoType}SuggestedProducts`).append(getCompareProductsHeader(uniqueKey, product.pid, product.updatedTime, product.isLoading, infoType));
                         if(product.suggestions.length > 0){
                             product.suggestions.forEach(suggestedProduct => {
 
@@ -215,7 +236,7 @@ async function drawProducts() {
                                 $(`#${infoType}SuggestedProducts`).append(suggestedProductHtml);
                             })
                         } else {
-                            // No products to compare
+                            // No products to compare (no product image)
                             let img = Math.floor(Math.random() * 4) + 1;
                             let suggestedProductHtml = 
                             `<li class="justify-content-center ${uniqueKey} suggestedProduct" style="display: grid;">
@@ -239,10 +260,19 @@ async function drawProducts() {
  * @param {String} pid 
  * @param {Date} updatedTime 
  */
-function getCompareProductsHeader(uniqueKey, pid, updatedTime, isLoading){
+function getCompareProductsHeader(uniqueKey, pid, updatedTime, isLoading, infoType){
     let d = new Date(updatedTime);
     let isLoadingClass = "";
+    let savedIcon = "";
     if(isLoading) isLoadingClass = "fa-spin";
+    if(infoType != "saved"){
+        savedIcon = 
+        `<li class="nav-item mx-2">
+            <span style="font-size: 1.5em; color: #28a745; cursor: pointer" data-toggle="tooltip" data-placement="top" title="Save Product" class="saveProduct" pid="${pid}">
+                <i class="fas fa-cloud-download-alt"></i>
+            </span>
+        </li>`;
+    }
     let headerHtml = 
     `<div class="container-fluid bg-light border-bottom border-danger p-0 mb-3 px-2 ${uniqueKey} suggestedProduct">
         <div class="row">
@@ -253,16 +283,17 @@ function getCompareProductsHeader(uniqueKey, pid, updatedTime, isLoading){
                 <nav class="navbar navbar-expand-sm justify-content-end">
 
                     <ul class="navbar-nav">
-                    <li class="nav-item mx-2">
-                        <span style="font-size: 1.5em; color: #28a745; cursor: pointer;" data-toggle="tooltip" data-placement="top" title="Compare products" class="syncProduct" pid="${pid}">
-                            <i class="fas fa-sync-alt ${isLoadingClass}"></i>
-                        </span>
-                    </li>
-                    <li class="nav-item mx-2">
-                        <span style="font-size: 1.5em; color: #db2e2e; cursor: pointer" data-toggle="tooltip" data-placement="top" title="Remove" class="removeProduct" pid="${pid}">
-                            <i class="fas fa-trash-alt"></i>
-                        </span>
-                    </li>
+                        <li class="nav-item mx-2">
+                            <span style="font-size: 1.5em; color: #28a745; cursor: pointer;" data-toggle="tooltip" data-placement="top" title="Compare products" class="syncProduct" pid="${pid}">
+                                <i class="fas fa-sync-alt ${isLoadingClass}"></i>
+                            </span>
+                        </li>
+                        ${savedIcon}
+                        <li class="nav-item mx-2">
+                            <span style="font-size: 1.5em; color: #db2e2e; cursor: pointer" data-toggle="tooltip" data-placement="top" title="Remove" class="removeProduct" pid="${pid}">
+                                <i class="fas fa-trash-alt"></i>
+                            </span>
+                        </li>
                     </ul>
                 
                 </nav>
@@ -337,12 +368,13 @@ function jqueryDisplaySelectedProduct(){
  */
 function jquerySyncOrRemoveFunc(){
     $(`.syncProduct`).bind('click', function(){
-        let pid = $(this).attr("pid");
-        syncOrRemoveProduct("sync", pid);
+        syncOrRemoveOrSaveProduct("sync", $(this).attr("pid"));
     });
     $(`.removeProduct`).bind('click', function(){
-        let pid = $(this).attr("pid");
-        syncOrRemoveProduct("remove", pid);
+        syncOrRemoveOrSaveProduct("remove", $(this).attr("pid"));
+    });
+    $(`.saveProduct`).bind('click', function(){
+        syncOrRemoveOrSaveProduct("save", $(this).attr("pid"));
     });
 }
 
@@ -429,6 +461,7 @@ chrome.runtime.onMessage.addListener(async function (request, sender) {
  */
 $(document).ready(async (e) => {
     log("Testing");
+    await updateProductData("", "isLoading", 0, true);
     drawProducts();
     $(".ex").click(async (e) => {
         await compareAllProducts(false);
