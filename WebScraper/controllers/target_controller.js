@@ -3,7 +3,7 @@ const cheerio = require('cheerio');
 var logger = require('../utils/winston');
 var stringSimilarity = require('string-similarity');
 
-const productInfo = function(req, res, next){
+const productInfo = async function(req, res, next){
 
 
 
@@ -12,7 +12,8 @@ const productInfo = function(req, res, next){
     let response = {};
 
     const start = Date.now();
-    axios.get(url).then((html) => {
+    try{
+        let html = await axios.get(url);
         // logger.info(html.data);
         const takenTime = Date.now() - start;
         logger.info(`Time taken to get Target information: ${takenTime} and URL: ${url}`);
@@ -44,97 +45,110 @@ const productInfo = function(req, res, next){
         }
         let priceUrl = `https://redsky.target.com/web/pdp_location/v1/tcin/${productInfo["sku"]}?pricing_store_id=2088&key=${targetApiKey}`;
         logger.info(`Target: priceUrl: ${priceUrl}`);
-        axios.get(priceUrl).then((jsonResponse) => {
-            jsonResponse = jsonResponse.data;
-            if(jsonResponse["price"]){
-                if(jsonResponse["price"]["current_retail"]) productInfo['price'] = jsonResponse["price"]["current_retail"];
-                if(jsonResponse["price"]["current_retail_min"]) productInfo['price'] = jsonResponse["price"]["current_retail_min"];
-            }
-            
-            if(!productInfo['price']){
-                productInfo['price'] = -1;
-            }
 
-            if(!productInfo['name']) productInfo['name'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
-            if(!productInfo['ratings'] || productInfo['reviews']){
-                let reviewRatings = $(`[data-test=ratings]`).find(`.h-sr-only`).html().trim().match(/(\d\.*\d*) out of (\d\.*\d*) stars with (\d+)* reviews/);
-                if(reviewRatings.length == 4){
-                    productInfo['ratings'] = reviewRatings[1];
-                    productInfo['reviews'] = reviewRatings[3];
-                }
-            }
-            if(!productInfo['img']) productInfo['img'] = $(".slideDeckPicture").find("img").attr("src");
-            productInfo['link'] = url;
-            response['error'] = 0;
-            response['productInfo'] = productInfo;
+        // Get price of the prduct using an API
+        let jsonResponse = await axios.get(priceUrl);
+        jsonResponse = jsonResponse.data;
+        if(jsonResponse["price"]){
+            if(jsonResponse["price"]["current_retail"]) productInfo['price'] = jsonResponse["price"]["current_retail"];
+            if(jsonResponse["price"]["current_retail_min"]) productInfo['price'] = jsonResponse["price"]["current_retail_min"];
+        }
+        
+        if(!productInfo['price']){
+            productInfo['price'] = -1;
+        }
 
-            res.json(response);
-        }).catch (function (e) {
-            logger.error(e.message);
-            response['error'] = 1;
-            response['message'] = e.message;
-            res.json(response);
-        });
-    }).catch (function (e) {
-        logger.error(e.message);
-        response['error'] = 1;
-        response['message'] = e.message;
+        if(!productInfo['name']) productInfo['name'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
+        if(!productInfo['ratings'] || productInfo['reviews']){
+            let reviewRatings = $(`[data-test=ratings]`).find(`.h-sr-only`).html().trim().match(/(\d\.*\d*) out of (\d\.*\d*) stars with (\d+)* reviews/);
+            if(reviewRatings.length == 4){
+                productInfo['ratings'] = reviewRatings[1];
+                productInfo['reviews'] = reviewRatings[3];
+            }
+        }
+        if(!productInfo['img']) productInfo['img'] = $(".slideDeckPicture").find("img").attr("src");
+        productInfo['link'] = url;
+        response['error'] = 0;
+        response['productInfo'] = productInfo;
+
         res.json(response);
-    });
+    
+    } catch (error) {
+        logger.error(error.message);
+        response['error'] = 1;
+        response['message'] = error.message;
+        res.json(response);
+    }
 };
 
-const getProducts = function(req, res){
+const getProducts = async function(req, res){
     const product = req.params.p;
-    const url = `https://www.walmart.com/search/?grid=false&query=${product}&sort=best_match`;
+    const url = `https://www.target.com/s?searchTerm=${product}`;
     let productsInfo = new Array();
     let totalItems = 3;
     let j = 0;
     let response = {};
 
-    axios.get(url).then((html) => {
-        let $ = cheerio.load(html.data);
-        let itemList = $(".search-result-gridview-items > li");
-        if(itemList.length == 0) itemList = $("#searchProductResult > div > div");
-        logger.info(`Itemlist length: ${itemList.length} and URL: ${url}`);
-        for(let i = 0; i < itemList.length; i++){
-            if(totalItems <= 0) break;
-            totalItems--;
-            productsInfo[j] = {};
-            productsInfo[j]['match'] = 0; // Initialize
-            productsInfo[j]['owner'] = "walmart";
-            productsInfo[j]['price'] = $(itemList[i]).find(".price-main-block").find(".visuallyhidden").text();
-
-            if(productsInfo[j]['price']){
-                productsInfo[j]['price'] = productsInfo[j]['price'].match(/([0-9,\.]+)/);
-                if(productsInfo[j]['price'].length > 0){
-                    productsInfo[j]['price'] = productsInfo[j]['price'][0].trim();
-                    productsInfo[j]['price'] = productsInfo[j]['price'].replace(",","");
-                } else {
-                    productsInfo[j]['price'] = -1;
-                }
-            } else {
-                productsInfo[j]['price'] = -1;
-            }
-
-            productsInfo[j]['link'] = "http://walmart.com"+$(itemList[i]).find(".search-result-product-title > a").attr("href");
-            productsInfo[j]['name'] = $(itemList[i]).find(".search-result-product-title > a > span").text();
-            productsInfo[j]['match'] = stringSimilarity.compareTwoStrings(product.toLowerCase(), productsInfo[j]['name'].toLowerCase());
-            productsInfo[j]['ratings'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-avg-rating").text().trim();
-            productsInfo[j]['reviews'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-review-count").text().trim();
-            productsInfo[j]['img'] = $(itemList[i]).find("img").attr("src");
-            logger.info(`Image link: ${productsInfo[j]['img']}`);
-            productsInfo[j]['index'] = j;
-            j++;
+    try{ 
+        let html = await axios.get(url);
+        // Get JSON object to get API KEY
+        let jsObject = html.data.match(/__PRELOADED_STATE__.*?({.*?)<\/script>/);
+        if(jsObject.length == 2){
+            jsObject = jsObject[1].trim();
         }
-        response['error'] = 0;
+        jsObject = JSON.parse(jsObject);
+        let targetApiKey = "";
+        if(jsObject["firefly"]){
+            if(jsObject["firefly"]["apiKey"]) targetApiKey = jsObject["firefly"]["apiKey"];
+        }
+
+        // Another way to fetch API KEY (fallback)
+        if(!targetApiKey){
+            let targetApiKeyMatch = html.data.match(/"apiKey":"(.*?)",/);
+            if(targetApiKeyMatch.length == 2){
+                targetApiKey = targetApiKeyMatch[1];
+            }
+        }
+
+        // Get all the products detail in JSON
+        let priceUrl = `https://redsky.target.com/v2/plp/search/?&key=${targetApiKey}&keyword=${product}&pricing_store_id=2088`;
+        logger.info(`Target: products compare: ${priceUrl}`);
+
+        // Get price of the prduct using an API
+        let jsonResponse = await axios.get(priceUrl);
+        jsonResponse = jsonResponse.data;
+
+        if(jsonResponse["search_response"] && jsonResponse["search_response"]["items"]){
+            let itemList = jsonResponse["search_response"]["items"]["Item"];
+            for(let i = 0; i < itemList.length; i++){
+                if(totalItems <= 0) break;
+                totalItems--;
+                productsInfo[j] = {};
+                productsInfo[j]['match'] = 0; // Initialize
+                productsInfo[j]['owner'] = "target";
+                productsInfo[j]['name'] = itemList[j]["title"];
+                productsInfo[j]['match'] = stringSimilarity.compareTwoStrings(product.toLowerCase(), productsInfo[j]['name'].toLowerCase());
+                productsInfo[j]['link'] = `https://www.target.com${itemList[j]["url"]}`;
+                if(itemList[j]["images"] && itemList[j]["images"][0]){
+                    productsInfo[j]['img'] = `${itemList[j]["images"][0]["base_url"]}${itemList[j]["images"][0]["primary"]}?wid=325&hei=325&qlt=100&fmt=webp`;
+                }
+                productsInfo[j]['ratings'] = itemList[j]["average_rating"];
+                productsInfo[j]['reviews'] = itemList[j]["total_reviews"];
+                if(itemList[j]["total_reviews"]){
+                    productsInfo[j]['price'] = itemList[j]["total_reviews"]["current_retail"];
+                }
+                productsInfo[j]['index'] = j;
+                j++;
+            }
+        }
         response['productsInfo'] = productsInfo;
         res.json(response);
-    }).catch(function(e){
-        logger.error(e.message);
+    } catch (error) {
+        logger.error(error.message);
         response['error'] = 1;
-        response['message'] = e.message;
+        response['message'] = error.message;
         res.json(response);
-    });
+    }
 }
 
 exports.productInfo = productInfo;

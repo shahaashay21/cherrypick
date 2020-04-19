@@ -3,13 +3,14 @@ const cheerio = require('cheerio');
 var logger = require('../utils/winston');
 var stringSimilarity = require('string-similarity');
 
-const productInfo = function(req, res, next){
+const productInfo = async function(req, res, next){
     const url = req.query.url;
     let productInfo = {};
     let response = {};
 
     const start = Date.now();
-    axios.get(url).then((html) => {
+    try{
+        let html = await axios.get(url);
         const takenTime = Date.now() - start;
         logger.info(`Time taken to get Walmart information: ${takenTime} and URL: ${url}`);
         let $ = cheerio.load(html.data);
@@ -41,15 +42,15 @@ const productInfo = function(req, res, next){
         response['productInfo'] = productInfo;
 
         res.json(response);
-    }).catch (function (e) {
-        logger.error(e.message);
+    } catch (error) {
+        logger.error(error.message);
         response['error'] = 1;
-        response['message'] = e.message;
+        response['message'] = error.message;
         res.json(response);
-    });
+    };
 };
 
-const getProducts = function(req, res){
+const getProducts = async function(req, res){
     const product = req.params.p;
     const url = `https://www.walmart.com/search/?grid=false&query=${product}&sort=best_match`;
     let productsInfo = new Array();
@@ -57,7 +58,8 @@ const getProducts = function(req, res){
     let j = 0;
     let response = {};
 
-    axios.get(url).then((html) => {
+    try{
+        let html = await axios.get(url);
         let $ = cheerio.load(html.data);
         let itemList = $(".search-result-gridview-items > li");
         if(itemList.length == 0) itemList = $("#searchProductResult > div > div");
@@ -95,12 +97,12 @@ const getProducts = function(req, res){
         response['error'] = 0;
         response['productsInfo'] = productsInfo;
         res.json(response);
-    }).catch(function(e){
-        logger.error(e.message);
+    } catch (error) {
+        logger.error(error.message);
         response['error'] = 1;
-        response['message'] = e.message;
+        response['message'] = error.message;
         res.json(response);
-    });
+    };
 }
 
 exports.productInfo = productInfo;
