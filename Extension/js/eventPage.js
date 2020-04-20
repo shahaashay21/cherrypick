@@ -438,7 +438,7 @@ function addProductDetails(productInfo, infoType){
  * MESSAGE LISTNER
  * 1. Get product details as soon as page is loaded
  */
-chrome.runtime.onMessage.addListener(async function (request, sender) {
+chrome.runtime.onMessage.addListener(async function (request, sender, callback) {
     if (request.action == "initialProductInfo") {
         log("Initial Product Info");
         log(request.source);
@@ -453,6 +453,10 @@ chrome.runtime.onMessage.addListener(async function (request, sender) {
             addProductDetails(request.source, "recent");
         }
         setStorageData("recentClickedProduct", "");
+    } else if (request.action == "getAjax") { // Still confused, needs to find why it won't wait unitil callback and close the port automatically
+        log("Initial Product Info");
+        let response = await getHttp(request.source);
+        callback(response);
     }
 });
 

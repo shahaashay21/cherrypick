@@ -24,12 +24,13 @@ const DAFAULT_OPTIONS = {
 const OWNER_ICONS = {
     "amazon": "amazon.png",
     "walmart": "walmart.png",
-    "bestbuy": "bestbuy.png"
+    "bestbuy": "bestbuy.png",
+    "target": "target.png",
 }
 
 var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-const ALL_WEBSITES = ["amazon", "walmart", "bestbuy"];
+const ALL_WEBSITES = ["amazon", "walmart", "bestbuy", "target"];
 
 const STORAGE_ITEMS = [
     "products", "lastAccessed", "defaultOptions", "lastWindow", "lastSelectedId", "recentClickedProduct"

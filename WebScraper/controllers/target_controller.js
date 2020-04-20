@@ -134,13 +134,23 @@ const getProducts = async function(req, res){
                 }
                 productsInfo[j]['ratings'] = itemList[j]["average_rating"];
                 productsInfo[j]['reviews'] = itemList[j]["total_reviews"];
-                if(itemList[j]["total_reviews"]){
-                    productsInfo[j]['price'] = itemList[j]["total_reviews"]["current_retail"];
+                if(itemList[j]["price"]){
+                    productsInfo[j]['price'] = itemList[j]["price"]["formatted_current_price"].match(/([0-9,\.]+)/);
+                    if(productsInfo[j]['price'].length > 0){
+                        productsInfo[j]['price'] = productsInfo[j]['price'][0].trim();
+                        productsInfo[j]['price'] = productsInfo[j]['price'].replace(",","");
+                    } else {
+                        productsInfo[j]['price'] = -1;
+                    }
+                } else {
+                    productsInfo[j]['price'] = -1;
                 }
                 productsInfo[j]['index'] = j;
                 j++;
             }
         }
+
+        response['error'] = 0;
         response['productsInfo'] = productsInfo;
         res.json(response);
     } catch (error) {

@@ -54,6 +54,9 @@ function webscrap(){
             case "bestbuy":
                 productInfo = await getBestbuyProduct();
                 break;
+            case "target":
+                productInfo = await getTargetProduct();
+                break;
             default:
                 log("Current website is not supported yet");
                 productInfo["error"] = 1;
@@ -71,7 +74,7 @@ function getAmazonProduct(){
 
         productInfo['owner'] = "amazon";
         productInfo['price'] = $("#priceblock_ourprice").text();
-
+        
         if(productInfo['price']){
             productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/);
             if(productInfo['price'].length > 0){
@@ -86,8 +89,8 @@ function getAmazonProduct(){
 
         productInfo['name'] = $("#productTitle").text();
         productInfo['name'] = productInfo['name'].replace(/\\n/gm, "").trim();
-        if($(".reviewCountTextLinkedHistogram").attr("name")){
-            productInfo['ratings'] = $(".reviewCountTextLinkedHistogram").attr("name").match(/(^[0-9]*\.*[0-9]*)\s/gm)[0].trim();
+        if($(".reviewCountTextLinkedHistogram").attr("title")){
+            productInfo['ratings'] = $(".reviewCountTextLinkedHistogram").attr("title").match(/(^[0-9]*\.*[0-9]*)\s/gm)[0].trim();
         }
         productInfo['img'] = $("#imageBlock_feature_div").find("#altImages").find(".item.imageThumbnail").find("img").attr("src");
         productInfo['link'] = url;
@@ -163,5 +166,65 @@ function getBestbuyProduct(){
         response['productInfo'] = productInfo;
 
         resolve(response);
+    });
+}
+
+function getTargetProduct(){
+    return new Promise(async resolve => {
+        let response = {};
+        try{
+            let productInfo = {};
+            let url = location.href;
+            let html = {};
+            html.data = document.documentElement.outerHTML;
+
+            let targetApiKey = "";
+            let targetApiKeyMatch = html.data.match(/"apiKey":"(.*?)",/);
+            if(targetApiKeyMatch.length == 2){
+                targetApiKey = targetApiKeyMatch[1];
+            }
+
+            let jsObject = html.data.match(/type="application\/ld\+json">(.*?)<\/script>/);
+            if(jsObject.length == 2){
+                jsObject = jsObject[1];
+            }
+            jsObject = JSON.parse(jsObject);
+
+            productInfo['owner'] = "target";
+
+            if(jsObject["@graph"]){
+                let productObj = jsObject["@graph"][0];
+                if(productObj){
+                    productInfo['name'] = productObj["name"];
+                    productInfo['img'] = productObj["image"];
+                    productInfo['sku'] = productObj["sku"];
+                    productInfo['ratings'] = productObj["aggregateRating"]["ratingValue"];
+                    productInfo['reviews'] = productObj["aggregateRating"]["reviewCount"];
+                }
+            }
+            let priceUrl = `https://redsky.target.com/web/pdp_location/v1/tcin/${productInfo["sku"]}?pricing_store_id=2088&key=${targetApiKey}`;
+            
+            if(!productInfo['price']){
+                productInfo['price'] = -1;
+            }
+
+            if(!productInfo['name']) productInfo['name'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
+            if(!productInfo['ratings'] || productInfo['reviews']){
+                let reviewRatings = $(`[data-test=ratings]`).find(`.h-sr-only`).html().trim().match(/(\d\.*\d*) out of (\d\.*\d*) stars with (\d+)* reviews/);
+                if(reviewRatings.length == 4){
+                    productInfo['ratings'] = reviewRatings[1];
+                    productInfo['reviews'] = reviewRatings[3];
+                }
+            }
+            if(!productInfo['img']) productInfo['img'] = $(".slideDeckPicture").find("img").attr("src");
+            productInfo['link'] = url;
+            response['error'] = 0;
+            response['productInfo'] = productInfo;
+            resolve(response);
+        } catch (error){
+            response['error'] = 1;
+            response['message'] = error.message;
+            resolve(response);
+        }
     });
 }

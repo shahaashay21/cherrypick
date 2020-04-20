@@ -1,4 +1,4 @@
-const supportedSites = ["amazon", "amzn", "bestbuy", "walmart"];
+const supportedSites = ["amazon", "amzn", "bestbuy", "walmart", "target"];
 
 
 function isSameProduct(products, newProduct) {
@@ -168,4 +168,34 @@ function updateProductData(productObject, key, value, all = false){
 function log(message, showAlways = false){
     let d = new Date();
     if(DEBUG || showAlways) console.log(`${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}::: ${message}`);
+}
+
+function getHttp(url){
+    return new Promise(resolve => {
+        $.ajax({
+            url: url,
+            timeout: 6000,
+            tryCount: 0,
+            retryLimit: 2,
+            success: function (data) {
+                return resolve(data);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (textStatus == 'timeout') {
+                    this.tryCount++;
+                    if (this.tryCount <= this.retryLimit) {
+                        //try again
+                        log(`Remaining Retry: ${this.retryLimit - 1}`);
+                        $.ajax(this);
+                    } else {
+                        // alert(`Failed to add an item. Please try again: ${urlPath}`);
+                        log("AJAX time out");
+                        return resolve({error: 1, message: textStatus});
+                    }
+                } else {
+                    return resolve({error: 1, message: textStatus});
+                }
+            },
+        });
+    })
 }

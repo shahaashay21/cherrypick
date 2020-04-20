@@ -32,15 +32,13 @@ const productInfo = async function(req, res, next){
 
         productInfo['name'] = $("#productTitle").text();
         productInfo['name'] = productInfo['name'].replace(/\\n/gm, "").trim();
-        if($(".reviewCountTextLinkedHistogram").attr("name")){
-            productInfo['ratings'] = $(".reviewCountTextLinkedHistogram").attr("name").match(/(^[0-9]*\.*[0-9]*)\s/gm)[0].trim();
+        if($(".reviewCountTextLinkedHistogram").attr("title")){
+            productInfo['ratings'] = $(".reviewCountTextLinkedHistogram").attr("title").match(/(^[0-9]*\.*[0-9]*)\s/gm)[0].trim();
         }
         productInfo['img'] = $("#imageBlock_feature_div").find("#altImages").find(".item.imageThumbnail").find("img").attr("src");
         productInfo['link'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;
-
-        logger.info(JSON.stringify(productInfo));
 
         res.json(response);
     } catch (error) {
