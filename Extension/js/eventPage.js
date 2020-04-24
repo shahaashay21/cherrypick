@@ -9,7 +9,7 @@ var _LTracker = _LTracker || [];
 _LTracker.push('Hello World');
 
 // Sentry to get error details and messages to the sentry cloud and email notification
-Sentry.init({ dsn: 'https://c66ccb3db7044b17bacf1f1f870a22b4@o376556.ingest.sentry.io/5197470' });
+// Sentry.init({ dsn: 'https://c66ccb3db7044b17bacf1f1f870a22b4@o376556.ingest.sentry.io/5197470' });
 
 
 // Runs once in a lifetime when cherry pick is installed
@@ -438,25 +438,29 @@ function addProductDetails(productInfo, infoType){
  * MESSAGE LISTNER
  * 1. Get product details as soon as page is loaded
  */
-chrome.runtime.onMessage.addListener(async function (request, sender, callback) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.action == "initialProductInfo") {
-        log("Initial Product Info");
         log(request.source);
-        let chromeData = await getStorageData();
-        let defaultOptions = JSON.parse(chromeData.defaultOptions);
-        if(defaultOptions.ignoreRecentProduct && chromeData.recentClickedProduct){
-            let recentClickedProduct = JSON.parse(chromeData.recentClickedProduct);
-            if(request.source && request.source.productInfo && recentClickedProduct.owner != request.source.productInfo.owner && recentClickedProduct.name == request.source.productInfo.name){
+        (async () => {
+            let chromeData = await getStorageData();
+            let defaultOptions = JSON.parse(chromeData.defaultOptions);
+            if(defaultOptions.ignoreRecentProduct && chromeData.recentClickedProduct){
+                let recentClickedProduct = JSON.parse(chromeData.recentClickedProduct);
+                if(request.source && request.source.productInfo && recentClickedProduct.owner != request.source.productInfo.owner && recentClickedProduct.name == request.source.productInfo.name){
+                    addProductDetails(request.source, "recent");
+                }
+            } else {
                 addProductDetails(request.source, "recent");
             }
-        } else {
-            addProductDetails(request.source, "recent");
-        }
-        setStorageData("recentClickedProduct", "");
-    } else if (request.action == "getAjax") { // Still confused, needs to find why it won't wait unitil callback and close the port automatically
-        log("Initial Product Info");
-        let response = await getHttp(request.source);
-        callback(response);
+            setStorageData("recentClickedProduct", "");
+        })();
+    } else if (request.action == "webRequest") {
+        (async () => {
+            let responseText = await getHttp(request.url, request.method);
+            sendResponse(responseText);
+        })();
+
+        return true; // prevents the callback from being called too early on return
     }
 });
 
@@ -465,7 +469,7 @@ chrome.runtime.onMessage.addListener(async function (request, sender, callback) 
  */
 $(document).ready(async (e) => {
     log("Testing");
-    await updateProductData("", "isLoading", 0, true);
+    await updateProductsData("", "isLoading", 0, true);
     drawProducts();
     $(".ex").click(async (e) => {
         await compareAllProducts(false);

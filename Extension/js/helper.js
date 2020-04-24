@@ -1,6 +1,10 @@
 const supportedSites = ["amazon", "amzn", "bestbuy", "walmart", "target"];
 
-
+/**
+ * Return true if the same product is already available or return false
+ * @param {JSON} products 
+ * @param {JSON} newProduct 
+ */
 function isSameProduct(products, newProduct) {
     return new Promise(resolve => {
         if (products) {
@@ -16,7 +20,10 @@ function isSameProduct(products, newProduct) {
     });
 }
 
-// Get API path of the Cherry picket back-end based on the current product URL
+/**
+ * Get API path of the Cherry picket back-end based on the current product URL
+ * @param {String} url 
+ */
 function getAPIPath(url) {
     let match = supportedSiteRegex().exec(url);
     if (match && match.length > 1) {
@@ -24,15 +31,26 @@ function getAPIPath(url) {
     }
 }
 
+/**
+ * Validating the current URL
+ * @param {String} myURL 
+ */
 function validURL(myURL) {
     var pattern = /[-a-zA-Z0-9@:%_\+.~#?&\/=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&\/=]*)?/gim;
     return pattern.test(myURL);
 }
 
+/**
+ * URL match with the supported regex
+ * @param {String} myURL 
+ */
 function supportedUrl(myURL) {
     return supportedSiteRegex().test(myURL);
 }
 
+/**
+ * Creates a regex consisting of all the supported websites by CP
+ */
 function supportedSiteRegex(){
     var regExString = "(";
     supportedSites.forEach(site => {
@@ -44,6 +62,10 @@ function supportedSiteRegex(){
     return regEx;
 }
 
+/**
+ * Create a new unique ID for the each new product
+ * @param {JSON} products 
+ */
 function getPID(products){
     let newPID;
     while(true){
@@ -79,9 +101,9 @@ function randomStr(length) {
  */
 function getStorageData(){
     return new Promise(resolve => {
-    chrome.storage.local.get(STORAGE_ITEMS, chromeData => {
-        return resolve(chromeData);
-    });
+        chrome.storage.local.get(STORAGE_ITEMS, chromeData => {
+            return resolve(chromeData);
+        });
     })
 }
 
@@ -138,12 +160,12 @@ function getUniqueProducts(){
 }
 
 /**
- * 
+ * Update any key value (data) of all the products
  * @param {JSON} productObject 
  * @param {String} key 
  * @param {String} value 
  */
-function updateProductData(productObject, key, value, all = false){
+function updateProductsData(productObject, key, value, all = false){
     return new Promise(resolve => {
         chrome.storage.local.get(["products"], async function (chromeData) {
             if (chromeData.products) {
@@ -165,15 +187,45 @@ function updateProductData(productObject, key, value, all = false){
     })
 }
 
-function log(message, showAlways = false){
-    let d = new Date();
-    if(DEBUG || showAlways) console.log(`${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}::: ${message}`);
+/**
+ * Generate error stack trace
+ */
+function getErrorObject(){
+    try { throw Error('') } catch(err) { return err; }
 }
 
-function getHttp(url){
+/**
+ * Generic logs
+ * @param {String} message 
+ * @param {Boolean} showAlways 
+ */
+function log(message, showAlways = false){
+    let traceDetails = "";
+    let fileName = "";
+    let line = "";
+    var err = getErrorObject();
+    var lines = err.stack.split("\n");
+    var callerLine = lines[3];
+    let callerLineMatch = callerLine.match(/.*[\/](.*):(.*):(.*)/);
+    if(callerLineMatch.length == 4){
+        fileName = callerLineMatch[1];
+        line = callerLineMatch[2];
+    }
+    if(fileName != "" && line != "") traceDetails = `[${fileName}:${line}]::`;
+    let d = new Date();
+    if(DEBUG || showAlways) console.log(`${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}::${traceDetails}${message}`);
+}
+
+/**
+ * Serves any web request with url the type of method
+ * @param {String} url
+ * @param {String} method 
+ */
+function getHttp(url, method = "GET"){
     return new Promise(resolve => {
         $.ajax({
             url: url,
+            method: method,
             timeout: 6000,
             tryCount: 0,
             retryLimit: 2,
@@ -198,4 +250,21 @@ function getHttp(url){
             },
         });
     })
+}
+
+/**
+ * Mainly used by content script to get the web request from the background script
+ * @param {String} url 
+ * @param {String} method 
+ */
+let webRequest = function (url, method = "GET"){
+    return new Promise(resolve => {
+        chrome.runtime.sendMessage({
+            url: url,
+            method: method,
+            action: 'webRequest',
+        }, function(webResponse) {
+            return resolve(webResponse);
+        });
+    });
 }

@@ -57,16 +57,6 @@ const productInfo = async function(req, res, next){
         if(!productInfo['price']){
             productInfo['price'] = -1;
         }
-
-        if(!productInfo['name']) productInfo['name'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
-        if(!productInfo['ratings'] || productInfo['reviews']){
-            let reviewRatings = $(`[data-test=ratings]`).find(`.h-sr-only`).html().trim().match(/(\d\.*\d*) out of (\d\.*\d*) stars with (\d+)* reviews/);
-            if(reviewRatings.length == 4){
-                productInfo['ratings'] = reviewRatings[1];
-                productInfo['reviews'] = reviewRatings[3];
-            }
-        }
-        if(!productInfo['img']) productInfo['img'] = $(".slideDeckPicture").find("img").attr("src");
         productInfo['link'] = url;
         response['error'] = 0;
         response['productInfo'] = productInfo;

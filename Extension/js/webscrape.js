@@ -1,7 +1,6 @@
 let finalData;
-log("jQuery");
 $(document).ready(function(){
-    log($);
+    log("jQuery");
 });
 
 async function readDom(){
@@ -203,20 +202,15 @@ function getTargetProduct(){
                 }
             }
             let priceUrl = `https://redsky.target.com/web/pdp_location/v1/tcin/${productInfo["sku"]}?pricing_store_id=2088&key=${targetApiKey}`;
-            
+
+            let jsonResponse = await webRequest(priceUrl);
+            if(jsonResponse){
+                if(jsonResponse["price"]["current_retail"]) productInfo['price'] = jsonResponse["price"]["current_retail"];
+                if(jsonResponse["price"]["current_retail_min"]) productInfo['price'] = jsonResponse["price"]["current_retail_min"];
+            }
             if(!productInfo['price']){
                 productInfo['price'] = -1;
             }
-
-            if(!productInfo['name']) productInfo['name'] = $(".product-atf").find(".prod-ProductTitle").text().replace(/\\n/gm, "").trim();
-            if(!productInfo['ratings'] || productInfo['reviews']){
-                let reviewRatings = $(`[data-test=ratings]`).find(`.h-sr-only`).html().trim().match(/(\d\.*\d*) out of (\d\.*\d*) stars with (\d+)* reviews/);
-                if(reviewRatings.length == 4){
-                    productInfo['ratings'] = reviewRatings[1];
-                    productInfo['reviews'] = reviewRatings[3];
-                }
-            }
-            if(!productInfo['img']) productInfo['img'] = $(".slideDeckPicture").find("img").attr("src");
             productInfo['link'] = url;
             response['error'] = 0;
             response['productInfo'] = productInfo;

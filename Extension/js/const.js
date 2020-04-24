@@ -1,6 +1,6 @@
 const URL = "http://localhost:3000/";
 
-const DEBUG = 0;
+const DEBUG = 1;
 // Initalize
 const PRODUCT_INIT = {
     recent: new Array(),

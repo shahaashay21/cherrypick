@@ -7,7 +7,7 @@ function compareAllProducts(checkSyncTime){
     return new Promise(async resolve => {
         let products = await getUniqueProducts();
         log(`Getting products`, true);
-        console.log(products);
+        log(products);
         let updateProductPromise = new Array();
         for (let product of products) {
             if (product && product.name && product.updatedTime && !product.isLoading) {
@@ -40,12 +40,11 @@ function compareAllProducts(checkSyncTime){
 function updateProductAndSuggestions(product){
     return new Promise(async resolve => {
         if(!$(`.syncProduct[pid=${product.pid}]`).find(".fas").hasClass("fa-spin")){
-            await updateProductData(product, "isLoading", 1);
+            await updateProductsData(product, "isLoading", 1);
             $(`.syncProduct[pid=${product.pid}]`).find(".fas").addClass("fa-spin");
         }
         log(`Name: ${product.name} and owner: ${product.owner}`, true);
-        let comparedProductsDetails = await compareProduct(product);
-        let updatedProductDetails = await getProductInfo(product);
+        let [comparedProductsDetails, updatedProductDetails] = await Promise.all([compareProduct(product), getProductInfo(product)]);
         await updateSuggestedProduct(product, comparedProductsDetails, updatedProductDetails);
         return resolve();
     })
