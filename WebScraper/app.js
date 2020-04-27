@@ -14,6 +14,7 @@ var amazonRouter = require('./routes/amazon');
 var bestbuyRouter = require('./routes/bestbuy');
 var walmartRouter = require('./routes/walmart');
 var targetRouter = require('./routes/target');
+var macysRouter = require('./routes/macys');
 
 var app = express();
 
@@ -56,6 +57,7 @@ app.use('/amzn', amazonRouter);
 app.use('/bestbuy', bestbuyRouter);
 app.use('/walmart', walmartRouter);
 app.use('/target', targetRouter);
+app.use('/macys', macysRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
