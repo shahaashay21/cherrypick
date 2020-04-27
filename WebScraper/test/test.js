@@ -7,8 +7,8 @@ const loadtest = require('loadtest');
 
 describe('Unit tests', function () {
 
-	// 50 Seconds
-	const requestTimeOut = 50000;
+	// 300 Seconds
+	const requestTimeOut = 300000;
 	this.timeout(requestTimeOut);
 
 	this.afterAll(function () {
@@ -75,6 +75,7 @@ describe('Unit tests', function () {
 	const BEST_BUY_PRDOCTS_COMPARE_API = `${url}/bestbuy/products/airpod%20charging%20case`;
 	const WALMART_API = `${url}/walmart?url=https://www.walmart.com/ip/Wireless-Charging-Case-for-AirPods/910249719`;
 	const WALMART_PRDOCTS_COMPARE_API = `${url}/walmart/products/airpod%20charging%20case`;
+	const ITERATION_SLEEP = 10000;
 
 
 	// Amazon APIs
@@ -91,7 +92,7 @@ describe('Unit tests', function () {
 							expect(jsonResponse.status).to.equal(200);
 							return resolve();
 						} else {
-							await sleep(2000);
+							await sleep(ITERATION_SLEEP);
 						}
 					} catch (e){
 						error = e.message;
@@ -115,7 +116,7 @@ describe('Unit tests', function () {
 							return resolve();
 						} else {
 							error = amazonProduct.error;
-							await sleep(2000);
+							await sleep(ITERATION_SLEEP);
 						}
 					} catch (e){
 						error = e.message;
@@ -139,7 +140,7 @@ describe('Unit tests', function () {
 							return resolve();
 						} else {
 							error = amazonProducts.error;
-							await sleep(2000);
+							await sleep(ITERATION_SLEEP);
 						}
 					} catch (e){
 						error = e.message;
@@ -166,7 +167,7 @@ describe('Unit tests', function () {
 							expect(jsonResponse.status).to.equal(200);
 							return resolve();
 						} else {
-							await sleep(2000);
+							await sleep(ITERATION_SLEEP);
 						}
 					} catch (e){
 						error = e.message;
@@ -190,7 +191,7 @@ describe('Unit tests', function () {
 							return resolve();
 						} else {
 							error = bestbuyProduct.error;
-							await sleep(2000);
+							await sleep(ITERATION_SLEEP);
 						}
 					} catch (e){
 						error = e.message;
@@ -214,7 +215,7 @@ describe('Unit tests', function () {
 							return resolve();
 						} else {
 							error = bestbuyProducts.error;
-							await sleep(2000);
+							await sleep(ITERATION_SLEEP);
 						}
 					} catch (e){
 						error = e.message;
@@ -241,7 +242,7 @@ describe('Unit tests', function () {
 							expect(jsonResponse.status).to.equal(200);
 							return resolve();
 						} else {
-							await sleep(2000);
+							await sleep(ITERATION_SLEEP);
 						}
 					} catch (e){
 						error = e.message;
@@ -265,7 +266,7 @@ describe('Unit tests', function () {
 							return resolve();
 						} else {
 							error = walmartProduct.error;
-							await sleep(2000);
+							await sleep(ITERATION_SLEEP);
 						}
 					} catch (e){
 						error = e.message;
@@ -289,7 +290,7 @@ describe('Unit tests', function () {
 							return resolve();
 						} else {
 							error = amazonProducts.error;
-							await sleep(2000);
+							await sleep(ITERATION_SLEEP);
 						}
 					} catch (e){
 						error = e.message;
