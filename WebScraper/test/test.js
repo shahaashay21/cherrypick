@@ -5,6 +5,16 @@ const axios = require('axios');
 const server = require('../bin/www');
 const loadtest = require('loadtest');
 
+// DEFINE CONSTANTS
+const AMAZON_API = `${url}/amazon?url=https://www.amazon.com/gp/product/B07CVL2D2S`;
+const AMAZON_PRODUCTS_COMPARE_API = `${url}/amazon/products/Acer%20SB220Q%20bi%2021.5%20inches%20Full%20HD%20(1920%20x%201080)%20IPS%20Ultra-Thin%20Zero%20Frame%20Monitor%20(HDMI%20&%20VGA%20port)`;
+const BEST_BUY_API = `${url}/bestbuy?url=https://www.bestbuy.com/site/apple-airpods-wireless-charging-case-white/6296120.p?skuId=6296120`;
+const BEST_BUY_PRDOCTS_COMPARE_API = `${url}/bestbuy/products/airpod%20charging%20case`;
+const WALMART_API = `${url}/walmart?url=https://www.walmart.com/ip/Wireless-Charging-Case-for-AirPods/910249719`;
+const WALMART_PRDOCTS_COMPARE_API = `${url}/walmart/products/airpod%20charging%20case`;
+const ITERATION_SLEEP = 10000;
+const ITERATION_NUMBER = 10;
+
 describe('Unit tests', function () {
 
 	// 300 Seconds
@@ -17,7 +27,7 @@ describe('Unit tests', function () {
 
 	it('should return 200, server test ', function () {
 		return new Promise(async (resolve, reject) => {
-			let iterations = 3;
+			let iterations = ITERATION_NUMBER;
 			while (iterations > 0) {
 				let jsonResponse = await axios.get(url);
 				if(jsonResponse.status == 200){
@@ -68,22 +78,13 @@ describe('Unit tests', function () {
 		return new Promise(resolve => setTimeout(resolve, milliseconds))
 	}
 
-	// DEFINE CONSTANTS
-	const AMAZON_API = `${url}/amazon?url=https://www.amazon.com/gp/product/B07CVL2D2S`;
-	const AMAZON_PRODUCTS_COMPARE_API = `${url}/amazon/products/Acer%20SB220Q%20bi%2021.5%20inches%20Full%20HD%20(1920%20x%201080)%20IPS%20Ultra-Thin%20Zero%20Frame%20Monitor%20(HDMI%20&%20VGA%20port)`;
-	const BEST_BUY_API = `${url}/bestbuy?url=https://www.bestbuy.com/site/apple-airpods-wireless-charging-case-white/6296120.p?skuId=6296120`;
-	const BEST_BUY_PRDOCTS_COMPARE_API = `${url}/bestbuy/products/airpod%20charging%20case`;
-	const WALMART_API = `${url}/walmart?url=https://www.walmart.com/ip/Wireless-Charging-Case-for-AirPods/910249719`;
-	const WALMART_PRDOCTS_COMPARE_API = `${url}/walmart/products/airpod%20charging%20case`;
-	const ITERATION_SLEEP = 10000;
-
 
 	// Amazon APIs
 	describe('Amazon', function () {
 
 		it('should return 200 status code for product info API ', function () {
 			return new Promise(async (resolve, reject) => {
-				let iterations = 3;
+				let iterations = ITERATION_NUMBER;
 				let error = "";
 				while (iterations > 0) {
 					try{
@@ -92,6 +93,8 @@ describe('Unit tests', function () {
 							expect(jsonResponse.status).to.equal(200);
 							return resolve();
 						} else {
+							console.log(`${jsonResponse.status}`);
+							error = `Status code: ${jsonResponse.status}`;
 							await sleep(ITERATION_SLEEP);
 						}
 					} catch (e){
@@ -105,18 +108,24 @@ describe('Unit tests', function () {
 
 		it('should return 5 product information ', function () {
 			return new Promise(async (resolve, reject) => {
-				let iterations = 3;
+				let iterations = ITERATION_NUMBER;
 				let error = "";
 				while (iterations > 0) {
 					try{
 						let jsonResponse = await axios.get(AMAZON_API);
-						let amazonProduct = jsonResponse.data;
-						if (amazonProduct.error == 0) {
-							expect(Object.keys(amazonProduct.productInfo).length).to.equal(5);
-							return resolve();
+						if(jsonResponse.status == 200){
+							let amazonProduct = jsonResponse.data;
+							if (amazonProduct.error == 0) {
+								expect(Object.keys(amazonProduct.productInfo).length).to.equal(5);
+								return resolve();
+							} else {
+								error = amazonProduct.error;
+								await sleep(ITERATION_SLEEP);
+							}
 						} else {
-							error = amazonProduct.error;
-							await sleep(ITERATION_SLEEP);
+							console.log(`${jsonResponse.status}`);
+							error = `Status code: ${jsonResponse.status}`;
+							await sleep(ITERATION_SLEEP)
 						}
 					} catch (e){
 						error = e.message;
@@ -129,18 +138,24 @@ describe('Unit tests', function () {
 
 		it('should return 3 suggested products ', function () {
 			return new Promise(async (resolve, reject) => {
-				let iterations = 3;
+				let iterations = ITERATION_NUMBER;
 				let error = "";
 				while (iterations > 0) {
 					try{
 						let jsonResponse = await axios.get(AMAZON_PRODUCTS_COMPARE_API);
-						let amazonProducts = jsonResponse.data;
-						if (amazonProducts.error == 0) {
-							expect((amazonProducts.productsInfo).length).to.equal(3);
-							return resolve();
+						if(jsonResponse.status == 200){
+							let amazonProducts = jsonResponse.data;
+							if (amazonProducts.error == 0) {
+								expect((amazonProducts.productsInfo).length).to.equal(3);
+								return resolve();
+							} else {
+								error = amazonProducts.error;
+								await sleep(ITERATION_SLEEP);
+							}
 						} else {
-							error = amazonProducts.error;
-							await sleep(ITERATION_SLEEP);
+							console.log(`${jsonResponse.status}`);
+							error = `Status code: ${jsonResponse.status}`;
+							await sleep(ITERATION_SLEEP)
 						}
 					} catch (e){
 						error = e.message;
@@ -158,7 +173,7 @@ describe('Unit tests', function () {
 
 		it('should return 200 status code for product info API ', function () {
 			return new Promise(async (resolve, reject) => {
-				let iterations = 3;
+				let iterations = ITERATION_NUMBER;
 				let error = "";
 				while (iterations > 0) {
 					try{
@@ -167,6 +182,8 @@ describe('Unit tests', function () {
 							expect(jsonResponse.status).to.equal(200);
 							return resolve();
 						} else {
+							console.log(`${jsonResponse.status}`);
+							error = `Status code: ${jsonResponse.status}`;
 							await sleep(ITERATION_SLEEP);
 						}
 					} catch (e){
@@ -180,18 +197,24 @@ describe('Unit tests', function () {
 
 		it('should return 6 product information ', function () {
 			return new Promise(async (resolve, reject) => {
-				let iterations = 3;
+				let iterations = ITERATION_NUMBER;
 				let error = "";
 				while (iterations > 0) {
 					try{
 						let jsonResponse = await axios.get(BEST_BUY_API);
-						let bestbuyProduct = jsonResponse.data;
-						if (bestbuyProduct.error == 0) {
-							expect(Object.keys(bestbuyProduct.productInfo).length).to.equal(6);
-							return resolve();
+						if(jsonResponse.status == 200){
+							let bestbuyProduct = jsonResponse.data;
+							if (bestbuyProduct.error == 0) {
+								expect(Object.keys(bestbuyProduct.productInfo).length).to.equal(6);
+								return resolve();
+							} else {
+								error = bestbuyProduct.error;
+								await sleep(ITERATION_SLEEP);
+							}
 						} else {
-							error = bestbuyProduct.error;
-							await sleep(ITERATION_SLEEP);
+							console.log(`${jsonResponse.status}`);
+							error = `Status code: ${jsonResponse.status}`;
+							await sleep(ITERATION_SLEEP)
 						}
 					} catch (e){
 						error = e.message;
@@ -204,18 +227,24 @@ describe('Unit tests', function () {
 
 		it('should return 3 suggested products ', function () {
 			return new Promise(async (resolve, reject) => {
-				let iterations = 3;
+				let iterations = ITERATION_NUMBER;
 				let error = "";
 				while (iterations > 0) {
 					try{
 						let jsonResponse = await axios.get(BEST_BUY_PRDOCTS_COMPARE_API);
-						let bestbuyProducts = jsonResponse.data;
-						if (bestbuyProducts.error == 0) {
-							expect((bestbuyProducts.productsInfo).length).to.equal(3);
-							return resolve();
+						if(jsonResponse.status == 200){
+							let bestbuyProducts = jsonResponse.data;
+							if (bestbuyProducts.error == 0) {
+								expect((bestbuyProducts.productsInfo).length).to.equal(3);
+								return resolve();
+							} else {
+								error = bestbuyProducts.error;
+								await sleep(ITERATION_SLEEP);
+							}
 						} else {
-							error = bestbuyProducts.error;
-							await sleep(ITERATION_SLEEP);
+							console.log(`${jsonResponse.status}`);
+							error = `Status code: ${jsonResponse.status}`;
+							await sleep(ITERATION_SLEEP)
 						}
 					} catch (e){
 						error = e.message;
@@ -233,7 +262,7 @@ describe('Unit tests', function () {
 
 		it('should return 200 status code for product info API ', function () {
 			return new Promise(async (resolve, reject) => {
-				let iterations = 3;
+				let iterations = ITERATION_NUMBER;
 				let error = "";
 				while (iterations > 0) {
 					try{
@@ -242,6 +271,8 @@ describe('Unit tests', function () {
 							expect(jsonResponse.status).to.equal(200);
 							return resolve();
 						} else {
+							console.log(`${jsonResponse.status}`);
+							error = `Status code: ${jsonResponse.status}`;
 							await sleep(ITERATION_SLEEP);
 						}
 					} catch (e){
@@ -255,18 +286,24 @@ describe('Unit tests', function () {
 
 		it('should return 6 product information ', function () {
 			return new Promise(async (resolve, reject) => {
-				let iterations = 3;
+				let iterations = ITERATION_NUMBER;
 				let error = "";
 				while (iterations > 0) {
 					try{
 						let jsonResponse = await axios.get(WALMART_API);
-						let walmartProduct = jsonResponse.data;
-						if (walmartProduct.error == 0) {
-							expect(Object.keys(walmartProduct.productInfo).length).to.equal(6);
-							return resolve();
+						if(jsonResponse.status == 200){
+							let walmartProduct = jsonResponse.data;
+							if (walmartProduct.error == 0) {
+								expect(Object.keys(walmartProduct.productInfo).length).to.equal(6);
+								return resolve();
+							} else {
+								error = walmartProduct.error;
+								await sleep(ITERATION_SLEEP);
+							}
 						} else {
-							error = walmartProduct.error;
-							await sleep(ITERATION_SLEEP);
+							console.log(`${jsonResponse.status}`);
+							error = `Status code: ${jsonResponse.status}`;
+							await sleep(ITERATION_SLEEP)
 						}
 					} catch (e){
 						error = e.message;
@@ -279,18 +316,24 @@ describe('Unit tests', function () {
 
 		it('should return 3 suggested products ', function () {
 			return new Promise(async (resolve, reject) => {
-				let iterations = 3;
+				let iterations = ITERATION_NUMBER;
 				let error = "";
 				while (iterations > 0) {
 					try{
 						let jsonResponse = await axios.get(WALMART_PRDOCTS_COMPARE_API);
-						let amazonProducts = jsonResponse.data;
-						if (amazonProducts.error == 0) {
-							expect((amazonProducts.productsInfo).length).to.equal(3);
-							return resolve();
+						if(jsonResponse.status == 200){
+							let amazonProducts = jsonResponse.data;
+							if (amazonProducts.error == 0) {
+								expect((amazonProducts.productsInfo).length).to.equal(3);
+								return resolve();
+							} else {
+								error = amazonProducts.error;
+								await sleep(ITERATION_SLEEP);
+							}
 						} else {
-							error = amazonProducts.error;
-							await sleep(ITERATION_SLEEP);
+							console.log(`${jsonResponse.status}`);
+							error = `Status code: ${jsonResponse.status}`;
+							await sleep(ITERATION_SLEEP)
 						}
 					} catch (e){
 						error = e.message;
