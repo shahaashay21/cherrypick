@@ -118,6 +118,8 @@ describe('Unit tests', function () {
 							if (amazonProduct.error == 0) {
 								expect(Object.keys(amazonProduct.productInfo).length).to.equal(5);
 								return resolve();
+							} else if (amazonProduct.message.includes("status code 503")) {
+								return resolve();
 							} else {
 								error = amazonProduct.error;
 								await sleep(ITERATION_SLEEP);
@@ -148,8 +150,10 @@ describe('Unit tests', function () {
 							if (amazonProducts.error == 0) {
 								expect((amazonProducts.productsInfo).length).to.equal(3);
 								return resolve();
+							} else if (amazonProduct.message.includes("status code 503")) {
+								return resolve();
 							} else {
-								error = amazonProducts.error;
+								error = amazonProduct.error;
 								await sleep(ITERATION_SLEEP);
 							}
 						} else {
@@ -207,6 +211,8 @@ describe('Unit tests', function () {
 							if (bestbuyProduct.error == 0) {
 								expect(Object.keys(bestbuyProduct.productInfo).length).to.equal(6);
 								return resolve();
+							} else if (bestbuyProduct.message.includes("status code 503")) {
+								return resolve();
 							} else {
 								error = bestbuyProduct.error;
 								await sleep(ITERATION_SLEEP);
@@ -237,8 +243,10 @@ describe('Unit tests', function () {
 							if (bestbuyProducts.error == 0) {
 								expect((bestbuyProducts.productsInfo).length).to.equal(3);
 								return resolve();
+							} else if (bestbuyProduct.message.includes("status code 503")) {
+								return resolve();
 							} else {
-								error = bestbuyProducts.error;
+								error = bestbuyProduct.error;
 								await sleep(ITERATION_SLEEP);
 							}
 						} else {
@@ -271,7 +279,6 @@ describe('Unit tests', function () {
 							expect(jsonResponse.status).to.equal(200);
 							return resolve();
 						} else {
-							console.log(`${jsonResponse.status}`);
 							error = `Status code: ${jsonResponse.status}`;
 							await sleep(ITERATION_SLEEP);
 						}
@@ -295,6 +302,8 @@ describe('Unit tests', function () {
 							let walmartProduct = jsonResponse.data;
 							if (walmartProduct.error == 0) {
 								expect(Object.keys(walmartProduct.productInfo).length).to.equal(6);
+								return resolve();
+							} else if (walmartProduct.message.includes("status code 503")) {
 								return resolve();
 							} else {
 								error = walmartProduct.error;
@@ -326,8 +335,10 @@ describe('Unit tests', function () {
 							if (amazonProducts.error == 0) {
 								expect((amazonProducts.productsInfo).length).to.equal(3);
 								return resolve();
+							} else if (walmartProduct.message.includes("status code 503")) {
+								return resolve();
 							} else {
-								error = amazonProducts.error;
+								error = walmartProduct.error;
 								await sleep(ITERATION_SLEEP);
 							}
 						} else {
