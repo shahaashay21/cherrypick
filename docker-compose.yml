@@ -1,0 +1,9 @@
+version: "3.8"
+services:
+  webapp:
+    build:
+      context: .
+      dockerfile: docker-webscraper.yml
+    container_name: webscrape-container
+    ports:
+     - "3000:3000"

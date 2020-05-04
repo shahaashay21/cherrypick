@@ -1,0 +1,11 @@
+FROM node
+
+MAINTAINER Aashay Shah <shah.aashay21@gmail.com>
+
+RUN apt-get update
+RUN git clone https://github.com/shahaashay21/Cherry-Pick
+
+WORKDIR Cherry-Pick/WebScraper
+
+RUN npm install
+CMD ["npm", "start"]
