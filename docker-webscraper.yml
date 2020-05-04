@@ -3,9 +3,12 @@ FROM node
 MAINTAINER Aashay Shah <shah.aashay21@gmail.com>
 
 RUN apt-get update
+
+WORKDIR /usr/src
+
 RUN git clone https://github.com/shahaashay21/Cherry-Pick
 
-WORKDIR Cherry-Pick/WebScraper
+WORKDIR /usr/src/Cherry-Pick/WebScraper
 
 RUN npm install
 CMD ["npm", "start"]
