@@ -16,6 +16,9 @@ var walmartRouter = require('./routes/walmart');
 var targetRouter = require('./routes/target');
 var macysRouter = require('./routes/macys');
 
+var feedbackRouter = require('./routes/feedback');
+var accountRouter = require('./routes/account');
+
 var app = express();
 
 //Set log middleware
@@ -58,6 +61,9 @@ app.use('/bestbuy', bestbuyRouter);
 app.use('/walmart', walmartRouter);
 app.use('/target', targetRouter);
 app.use('/macys', macysRouter);
+
+app.use('/feedback', feedbackRouter);
+app.use('/account', accountRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -1,6 +1,7 @@
 const URL = "http://localhost:3000/";
+// const URL = "http://40.121.64.75:3000/";
 
-const DEBUG = 1;
+const DEBUG = 0;
 // Initalize
 const PRODUCT_INIT = {
     recent: new Array(),
@@ -15,7 +16,7 @@ const UNIQUE_ID_LENGTH = 7;
 
 const DAFAULT_OPTIONS = {
     maxDefaultRecentProducts: 10,
-    syncTimeLimit: 10, //seconds
+    syncTimeLimit: 43200, //12 hours
     addCPProductOnClick: false, // add product to recent tab if it is opened by clicking on the compare product section
     savedProductExpTime: 30, // Saved product expiration time in DAYS 
     ignoreRecentProduct: true

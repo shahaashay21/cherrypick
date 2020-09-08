@@ -221,11 +221,12 @@ function log(message, showAlways = false){
  * @param {String} url
  * @param {String} method 
  */
-function getHttp(url, method = "GET"){
+function getHttp(url, method = "GET", data = ""){
     return new Promise(resolve => {
         $.ajax({
             url: url,
             method: method,
+            data: data,
             timeout: 6000,
             tryCount: 0,
             retryLimit: 2,

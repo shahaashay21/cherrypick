@@ -18,6 +18,7 @@
     <script src="../js/compareProducts.js" defer></script>
     <script src="../js/eventPage.js" defer></script>
     <script src="../js/popup.js" defer></script>
+    <script type="text/javascript" src="../js/oauth.js"></script>
 </head>
 
 <body>
@@ -37,8 +38,12 @@
                             href="#">Recent</a>
                         <a class="nav-item nav-link windowTitle" id="savedWindowTitle" openWindow="saved"
                             href="#">Saved</a>
-                        <a class="nav-item nav-link windowTitle ex" id="expiredWindowTitle" openWindow="expired"
-                            href="#">Expired</a>
+                        <!-- <a class="nav-item nav-link windowTitle ex" id="expiredWindowTitle" openWindow="expired"
+                            href="#">Expired</a> -->
+                        <a class="nav-item nav-link windowTitle ex" id="feedbackWindowTitle" openWindow="feedback"
+                            href="#">Feedback</a>
+                        <a class="nav-item nav-link windowTitle ex" id="optionsWindowTitle" openWindow="options"
+                            href="#">Options</a>
                     </div>
                 </div>
             </nav>
@@ -201,6 +206,52 @@
         </div>
         <div class="cp-right-body overflow-auto" style="padding: 0px 5px; overflow-x: hidden !important">
             <ul class="list-unstyled" id="expiredSuggestedProducts">
+
+            </ul>
+        </div>
+    </div>
+    <div class="cp-body" id="feedbackProductWindow">
+        <div class="container" style="padding-top: 7px;">
+            <h4 class="text-center font-weight-bold">Feedback</h4>
+            <form id="feedbackform">
+                <div class="row" style="margin-bottom: 10px;">
+                    <div class="col-sm-12">
+                        <label for="exampleFormControlTextarea1">Feedback:</label>
+                        <textarea class="form-control" type="textarea" name="feedback" id="feedback" placeholder="Your Feedback" maxlength="2000" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6 form-group">
+                        <label for="name">
+                            Your Name:</label>
+                        <input type="text" class="form-control" id="name" name="name" required="">
+                    </div>
+                    <div class="col-sm-6 form-group">
+                        <label for="email">
+                            Email:</label>
+                        <input type="email" class="form-control" id="email" name="email" required="">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12 form-group">
+                        <button type="submit" class="btn btn-warning form-control mb-2">Post</button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12 form-group" id="feedback_message" style="display: none;">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="cp-body" id="optionsProductWindow">
+        <div class="cp-left-body overflow-auto" style="padding: 5px 0px;">
+            <ul class="list-unstyled" id="optionsProducts">
+
+            </ul>
+        </div>
+        <div class="cp-right-body overflow-auto" style="padding: 0px 5px; overflow-x: hidden !important">
+            <ul class="list-unstyled" id="optionsSuggestedProducts">
 
             </ul>
         </div>
