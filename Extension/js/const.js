@@ -1,5 +1,5 @@
-const URL = "http://localhost:3000/";
-// const URL = "http://40.121.64.75:3000/";
+// const URL = "http://localhost:3000/";
+const URL = "http://52.183.23.130:3000/";
 
 const DEBUG = 0;
 // Initalize

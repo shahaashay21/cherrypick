@@ -13,24 +13,24 @@
     "debug": "~2.6.9",
     "ejs": "~2.6.1",
     "express": "~4.16.1",
-    "express-session": "^1.17.0",
-    "helmet": "^3.22.0",
+    "express-session": "^1.17.1",
+    "helmet": "^3.23.3",
     "http-errors": "~1.6.3",
-    "mongoose": "^5.9.9",
+    "mongoose": "^5.10.6",
     "mongoose-auto-increment": "^5.0.1",
     "morgan": "~1.9.1",
     "mysql": "^2.18.1",
-    "sequelize": "^5.21.8",
+    "sequelize": "^5.22.3",
     "stack-trace": "0.0.10",
-    "string-similarity": "^4.0.1",
-    "winston": "^3.2.1",
-    "winston-daily-rotate-file": "^4.4.2"
+    "string-similarity": "^4.0.2",
+    "winston": "^3.3.3",
+    "winston-daily-rotate-file": "^4.5.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "loadtest": "^4.2.0",
-    "mocha": "^7.1.1",
-    "nodemon": "^2.0.3",
+    "mocha": "^7.2.0",
+    "nodemon": "^2.0.4",
     "request": "^2.88.2"
   }
 }

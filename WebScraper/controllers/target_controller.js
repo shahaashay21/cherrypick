@@ -72,7 +72,9 @@ const productInfo = async function(req, res, next){
 };
 
 const getProducts = async function(req, res){
-    const product = req.params.p;
+    let product = req.params.p;
+    const targetSearchChar = 90;
+    product = product.substring(0, targetSearchChar);
     const url = `https://www.target.com/s?searchTerm=${product}`;
     let productsInfo = new Array();
     let totalItems = 3;
@@ -86,7 +88,7 @@ const getProducts = async function(req, res){
         if(jsObject.length == 2){
             jsObject = jsObject[1].trim();
         }
-        jsObject = JSON.parse(jsObject);
+        jsObject = JSON.parse(JSON.stringify(jsObject));
         let targetApiKey = "";
         if(jsObject["firefly"]){
             if(jsObject["firefly"]["apiKey"]) targetApiKey = jsObject["firefly"]["apiKey"];

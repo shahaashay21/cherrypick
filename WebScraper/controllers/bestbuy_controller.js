@@ -83,10 +83,16 @@ const getProducts = async function(req, res){
                     productsInfo[j]['price'] = -1;
                 }
 
+                let ratingInfo = $(itemList[i]).find(".information").find(".ratings-reviews").find(".reviews-stats-list").find("p.sr-only").text();
+                let ratingInfoMatch = ratingInfo.match(/rating,.*?((?:[0-9]*[.])?[0-9]+).*with\s(\d+)\sreview/);
+                if(ratingInfoMatch && ratingInfoMatch.length > 0){
+                    productsInfo[j]['ratings'] = ratingInfoMatch[1];
+                    productsInfo[j]['reviews'] = ratingInfoMatch[2];
+                }
+
                 productsInfo[j]['link'] = "http://bestbuy.com"+$(itemList[i]).find(".information").find(".sku-title").find("a").attr("href");
                 productsInfo[j]['name'] = $(itemList[i]).find(".information").find(".sku-title").find("a").text();
                 productsInfo[j]['match'] = stringSimilarity.compareTwoStrings(product.toLowerCase(), productsInfo[j]['name'].toLowerCase());
-                productsInfo[j]['ratings'] = $(itemList[i]).find(".information").find(".ratings-reviews").find(".reviews-stats-list").find(".c-ratings-reviews-v2 > i").attr(`alt`).trim();
                 productsInfo[j]['img'] = $(itemList[i]).find(".image-column").find("img.product-image").attr("src");
                 productsInfo[j]['index'] = j;
                 j++;
