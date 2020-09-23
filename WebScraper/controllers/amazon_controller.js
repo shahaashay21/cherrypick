@@ -58,9 +58,9 @@ const getProducts = async function(req, res){
     let response = {};
 
     try{
-        let html = await axios.get(url)
+        let html = await axios.get(url);
         let $ = cheerio.load(html.data);
-        let itemList = $(".s-result-list.s-search-results > div");
+        let itemList = $(".s-result-list.s-search-results > div[data-component-type=s-search-result]");
         logger.info(`Itemlist length: ${itemList.length} and URL: ${url}`);
         for(let i = 0; i < itemList.length; i++){
             if(totalItems <= 0) break;

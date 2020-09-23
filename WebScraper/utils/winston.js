@@ -4,8 +4,8 @@ const path = require('path');
 var stackTrace = require('stack-trace');
 
 const env = process.env.NODE_ENV || 'development';
-const logDir = 'logs';
-const DailyLogDir = 'logs/daily';
+const logDir = `..${path.sep}..${path.sep}logs`;
+const DailyLogDir = `${logDir}${path.sep}daily`;
 
 // Create the log directory if it does not exist
 if (!fs.existsSync(logDir)) {
