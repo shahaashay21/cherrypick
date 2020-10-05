@@ -1,8 +1,13 @@
 const express = require('express');
 const app = express();
+var cookieParser = require('cookie-parser');
 const port = 3005;
-var childProcess = require('child_process');
+const { spawn } = require('child_process');
 var githubUsername = 'shahaashay21'
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
@@ -20,7 +25,7 @@ app.get("/autodeploy", function (req, res) {
 
 function autodeploy(req, res){
     var sender = req.body.sender;
-    var branch = req.body.ref;
+    var branch = req.body.repository.default_branch;
 
     if(branch.indexOf('master') > -1 && sender.login === githubUsername){
         deploy(res);
@@ -28,13 +33,13 @@ function autodeploy(req, res){
 }
 
 function deploy(res){
-    childProcess.exec('cd /usr/src/ && ./deploy.sh', function(err, stdout, stderr){
-        if (err) {
-            console.error(err);
-            return res.send(500);
-        }
-        res.send(200);
+    const child = spawn('/usr/src/deploy.sh', [], {
+        detached: true,
+        stdio: 'ignore'
     });
+    
+    child.unref();
+    res.send(200);
 }
 
 app.listen(port, () => {
