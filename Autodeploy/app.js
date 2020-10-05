@@ -28,7 +28,7 @@ function autodeploy(req, res){
 }
 
 function deploy(res){
-    childProcess.exec('cd /home/src/autodeploy && ./deploy.sh', function(err, stdout, stderr){
+    childProcess.exec('cd /usr/src/ && ./deploy.sh', function(err, stdout, stderr){
         if (err) {
             console.error(err);
             return res.send(500);
