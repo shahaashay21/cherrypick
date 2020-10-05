@@ -1,9 +1,9 @@
 #!/bin/bash
 
 kill -9 $(lsof -t -i:3005)
-rm -rf /usr/src/Autodeploy
+rm -rf /usr/src/autodeploy
 
-mkdir /usr/src/Autodeploy && cd /usr/src/Autodeploy
+mkdir /usr/src/autodeploy && cd /usr/src/autodeploy
 
 curl -L https://raw.githubusercontent.com/shahaashay21/Cherry-Pick/master/Autodeploy/package.json -o package.json -s
 curl -L https://raw.githubusercontent.com/shahaashay21/Cherry-Pick/master/Autodeploy/app.js -o app.js -s

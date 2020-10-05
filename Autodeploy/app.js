@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const fs = require('fs');
 var cookieParser = require('cookie-parser');
 const port = 3005;
 const { spawn } = require('child_process');
@@ -32,10 +33,12 @@ function autodeploy(req, res){
     }
 }
 
+const out = fs.openSync('../deploy.out', 'a');
+const err = fs.openSync('../deploy.out', 'a');
 function deploy(res){
     const child = spawn('/usr/src/deploy.sh', [], {
         detached: true,
-        stdio: 'ignore'
+        stdio: [ 'ignore', out, err ]
     });
     
     child.unref();
