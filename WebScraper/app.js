@@ -19,6 +19,8 @@ var macysRouter = require('./routes/macys');
 var feedbackRouter = require('./routes/feedback');
 var accountRouter = require('./routes/account');
 
+var mongoose = require("./models/Mongoose");
+
 var app = express();
 
 //Set log middleware
@@ -36,10 +38,15 @@ app.use(logError)
 
 // Initalize session
 app.use(session({
-  secret: 'web scraping ',
+  secret: 'web scraping',
   resave: false,
   saveUninitialized: true
 }))
+
+// Connect mongo
+mongoose.connect((err) => {
+  if(err) console.error(err);
+})
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

@@ -7,3 +7,10 @@ services:
     container_name: webscrape-container
     ports:
      - "3000:3000"
+    depends_on:
+     - mongo
+  mongo:
+    image: mongo
+    container_name: mongo-container
+    ports:
+    - "27017:27017"
