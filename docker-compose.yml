@@ -5,6 +5,8 @@ services:
       context: .
       dockerfile: docker-webscraper.yml
     container_name: webscrape-container
+    volumes:
+      /usr/src/logs:/usr/src/logs
     ports:
      - "3000:3000"
     depends_on:
