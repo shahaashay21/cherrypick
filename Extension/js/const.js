@@ -1,7 +1,7 @@
 // const URL = "http://localhost:3000/";
-const URL = "http://52.175.207.98:3000/";
+const URL = "http://www.cherrypickify.com:3000/";
 
-const DEBUG = 0;
+const DEBUG = 1;
 // Initalize
 const PRODUCT_INIT = {
     recent: new Array(),

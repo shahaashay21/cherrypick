@@ -56,6 +56,9 @@ function webscrap(){
             case "target":
                 productInfo = await getTargetProduct();
                 break;
+            case "macy":
+                productInfo = await getMacyProduct();
+                break;
             default:
                 log("Current website is not supported yet");
                 productInfo["error"] = 1;
@@ -215,6 +218,19 @@ function getTargetProduct(){
             response['error'] = 0;
             response['productInfo'] = productInfo;
             resolve(response);
+        } catch (error){
+            response['error'] = 1;
+            response['message'] = error.message;
+            resolve(response);
+        }
+    });
+}
+
+function getMacyProduct(){
+    return new Promise(async resolve => {
+        let response = {};
+        try{
+            
         } catch (error){
             response['error'] = 1;
             response['message'] = error.message;

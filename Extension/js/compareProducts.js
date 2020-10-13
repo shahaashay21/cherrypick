@@ -98,11 +98,23 @@ function compareProductRequest(compareAgainst, productName){
             url: urlPath,
             timeout: 6000,
             tryCount: 0,
-            retryLimit: 2,
+            retryLimit: 3,
             success: function (productInfo) {
                 log("Got the reply");
                 log(productInfo);
-                return resolve(productInfo);
+                if(productInfo.error == 1){
+                    log(`compare prodcut response has an error and message: ${productInfo.message}`);
+                    this.tryCount++;
+                    if (this.tryCount <= this.retryLimit) {
+                        //try again
+                        log(`Remaining Retry: ${this.retryLimit - 1}`);
+                        $.ajax(this);
+                    } else {
+                        return resolve(productInfo);
+                    }
+                } else {
+                    return resolve(productInfo);
+                }
             },
             error: function (xhr, textStatus, errorThrown) {
                 if (textStatus == 'timeout') {
@@ -130,6 +142,8 @@ function getProductInfo(product){
         if (path) {
             $.ajax({
                 url: URL + path + "?url=" + product.link,
+                tryCount: 0,
+                retryLimit: 3,
                 success: function(productInfo) {
                     log("Got the reply for product information");
                     log(productInfo);
@@ -144,7 +158,15 @@ function getProductInfo(product){
                         if(productInfo.img) product["img"] = productInfo.img;
                         return resolve(product);
                     } else {
-                        return resolve();
+                        log(`product information has an error and message: ${productInfo.message}`);
+                        this.tryCount++;
+                        if (this.tryCount <= this.retryLimit) {
+                            //try again
+                            log(`Remaining Retry: ${this.retryLimit - 1}`);
+                            $.ajax(this);
+                        } else {
+                            return resolve();
+                        }
                     }
                 }
             });
