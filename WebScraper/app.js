@@ -1,3 +1,7 @@
+require('dotenv').config();
+var compression = require('compression');
+var helmet = require('helmet')
+
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -28,6 +32,9 @@ var accountRouter = require('./routes/account');
 var mongoose = require("./models/Mongoose");
 
 var app = express();
+
+app.use(helmet());
+app.use(compression());
 
 //Set log middleware
 function logRequest(req, res, next) {

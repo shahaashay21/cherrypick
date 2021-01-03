@@ -1,7 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 var logger = require('../utils/winston');
-var stringSimilarity = require('string-similarity');
+var helper = require('../utils/helper');
 
 const productInfo = async function(req, res, next){
     const url = req.query.url;
@@ -63,7 +63,11 @@ function getProductDetails(p){
         let response = {};
 
         try{
-            let html = await axios.get(url);
+            let html = await axios.get(url, {
+                headers: {
+                    "user-agent": ""
+                }
+            });
             let $ = cheerio.load(html.data);
             let itemList = $(".sku-item-list > li");
             logger.info(`Itemlist length: ${itemList.length} and URL: ${url}`);
@@ -98,7 +102,7 @@ function getProductDetails(p){
 
                     productsInfo[j]['link'] = "http://bestbuy.com"+$(itemList[i]).find(".information").find(".sku-title").find("a").attr("href");
                     productsInfo[j]['name'] = $(itemList[i]).find(".information").find(".sku-title").find("a").text();
-                    productsInfo[j]['match'] = stringSimilarity.compareTwoStrings(product.toLowerCase(), productsInfo[j]['name'].toLowerCase());
+                    productsInfo[j]['match'] = helper.stringSimilarity(product, productsInfo[j]['name']);
                     productsInfo[j]['img'] = $(itemList[i]).find(".image-column").find("img.product-image").attr("src");
                     productsInfo[j]['index'] = j;
                     j++;

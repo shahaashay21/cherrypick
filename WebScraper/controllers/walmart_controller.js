@@ -1,7 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 var logger = require('../utils/winston');
-var stringSimilarity = require('string-similarity');
+var helper = require('../utils/helper');
 
 const productInfo = async function (req, res, next) {
     const url = req.query.url;
@@ -94,7 +94,7 @@ function getProductDetails(p) {
 
                 productsInfo[j]['link'] = "http://walmart.com" + $(itemList[i]).find(".search-result-product-title > a").attr("href");
                 productsInfo[j]['name'] = $(itemList[i]).find(".search-result-product-title > a > span").text();
-                productsInfo[j]['match'] = stringSimilarity.compareTwoStrings(product.toLowerCase(), productsInfo[j]['name'].toLowerCase());
+                productsInfo[j]['match'] = helper.stringSimilarity(product, productsInfo[j]['name']);
                 productsInfo[j]['ratings'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-avg-rating").text().trim();
                 productsInfo[j]['reviews'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-review-count").text().trim();
                 productsInfo[j]['img'] = $(itemList[i]).find("img").attr("src");

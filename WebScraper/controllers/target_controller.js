@@ -1,7 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 var logger = require('../utils/winston');
-var stringSimilarity = require('string-similarity');
+var helper = require('../utils/helper');
 
 const productInfo = async function(req, res, next){
 
@@ -125,7 +125,7 @@ function getProductDetails(p){
                     productsInfo[j]['match'] = 0; // Initialize
                     productsInfo[j]['store'] = "target";
                     productsInfo[j]['name'] = itemList[j]["title"];
-                    productsInfo[j]['match'] = stringSimilarity.compareTwoStrings(product.toLowerCase(), productsInfo[j]['name'].toLowerCase());
+                    productsInfo[j]['match'] = helper.stringSimilarity(product, productsInfo[j]['name']);
                     productsInfo[j]['link'] = `https://www.target.com${itemList[j]["url"]}`;
                     if(itemList[j]["images"] && itemList[j]["images"][0]){
                         productsInfo[j]['img'] = `${itemList[j]["images"][0]["base_url"]}${itemList[j]["images"][0]["primary"]}?wid=325&hei=325&qlt=100&fmt=webp`;

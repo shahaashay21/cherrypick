@@ -1,7 +1,7 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 var logger = require('../utils/winston');
-var stringSimilarity = require('string-similarity');
+var helper = require('../utils/helper');
 
 const productInfo = async function(req, res, next){
     const url = req.query.url;
@@ -98,7 +98,7 @@ function getProductDetails(p){
                     productsInfo[j]['name'] = $(itemList[i]).find("a.a-link-normal.a-text-normal > span");
                     if(productsInfo[j]['name']){
                         productsInfo[j]['name'] = productsInfo[j]['name'].first().text();
-                        productsInfo[j]['match'] = stringSimilarity.compareTwoStrings(product.toLowerCase(), productsInfo[j]['name'].toLowerCase());
+                        productsInfo[j]['match'] = helper.stringSimilarity(product, productsInfo[j]['name']);
                     }
                     productsInfo[j]['ratings'] = $(itemList[i]).find(".a-popover-trigger").text();
                     if(productsInfo[j]['ratings']){

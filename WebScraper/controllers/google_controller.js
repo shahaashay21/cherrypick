@@ -3,7 +3,7 @@ const cheerio = require('cheerio');
 var logger = require('../utils/winston');
 let os = require('os');
 let app = require('../app');
-var stringSimilarity = require('string-similarity');
+let helper = require('../utils/helper');
 
 const getProducts = async function (req, res) {
     const product = req.params.p;
@@ -26,7 +26,11 @@ function getProductDetails(p, page = 0) {
         try {
             let googleShoppingURL = `https://www.google.com/search?tbm=shop&psb=1&hl=en-US&q=${p}`;
             let prdsExtraOptions = `,start:0,num:${TOTAL_SUGGESTED_PRODUCTS}`;
-            let productUrl = `http://${os.hostname()}:${gPort}/google/redirect?url=`
+            let hostName = "localhost";
+            if(process.env.NODE_ENV == 'production'){
+                hostName = process.env.hostname;
+            }
+            let productUrl = `http://${hostName}:${gPort}/google/redirect?url=`
             let compareProductUrl;
             let compareProductsResult = [];
 
@@ -54,7 +58,7 @@ function getProductDetails(p, page = 0) {
                 // Get the product name
                 response.name = $("div.HsDfZc:nth-child(2) > div:nth-child(2) a").text();
                 if(response.name){
-                    response.match = stringSimilarity.compareTwoStrings(p.toLowerCase(), response.name.toLowerCase());
+                    response.match = helper.stringSimilarity(p, response.name);
                 }
                 // Get the product description
                 response.snippet = $("div#specs > div:nth-child(2) > div:nth-last-child(1)").text();
@@ -151,7 +155,9 @@ let redirectGoogleProduct = async (req, res) => {
     try {
         let pUrl = req.query.url;
         pUrl = decodeURIComponent(pUrl);
+        console.log(pUrl);
         let productURL = await axios.get(pUrl);
+        console.log(productURL);
         logger.info(`Redirecting to ${productURL.request.res.responseUrl}`);
         res.redirect(productURL.request.res.responseUrl);
     } catch (error) {
