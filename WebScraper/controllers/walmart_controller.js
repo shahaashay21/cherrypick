@@ -3,28 +3,28 @@ const cheerio = require('cheerio');
 var logger = require('../utils/winston');
 var stringSimilarity = require('string-similarity');
 
-const productInfo = async function(req, res, next){
+const productInfo = async function (req, res, next) {
     const url = req.query.url;
     let productInfo = {};
     let response = {};
 
     const start = Date.now();
-    try{
+    try {
         let html = await axios.get(url);
         const takenTime = Date.now() - start;
         logger.info(`Time taken to get Walmart information: ${takenTime} and URL: ${url}`);
         let $ = cheerio.load(html.data);
 
-        productInfo['owner'] = "walmart";
+        productInfo['store'] = "walmart";
         productInfo['price'] = $(".product-atf").find(".prod-PriceSection").find(".prod-PriceHero").find(".price-group > .price-characteristic").attr("content");
-        
-        if(productInfo['price']){
+
+        if (productInfo['price']) {
             productInfo['price'] = productInfo['price'].match(/([0-9,\.]+)/);
-            if(productInfo['price'].length > 0){
+            if (productInfo['price'].length > 0) {
                 productInfo['price'] = productInfo['price'][0].trim();
-                productInfo['price'] = productInfo['price'].replace(",","");
+                productInfo['price'] = productInfo['price'].replace(/\,/g,'');
             } else {
-                productInfo['price'] = -1;    
+                productInfo['price'] = -1;
             }
         } else {
             productInfo['price'] = -1;
@@ -34,7 +34,7 @@ const productInfo = async function(req, res, next){
         productInfo['ratings'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=ratingValue]`).text().trim();
         productInfo['reviews'] = $(".product-atf").find(".prod-productsecondaryinformation").find(`[itemprop=reviewCount]`).text().trim();
         productInfo['img'] = $(".prod-alt-image-wrapper").find(".slider-list").find("img").attr("src");
-        if(productInfo['img']){
+        if (productInfo['img']) {
             productInfo['img'] = "https:" + productInfo['img'];
         }
         productInfo['link'] = url;
@@ -50,59 +50,69 @@ const productInfo = async function(req, res, next){
     };
 };
 
-const getProducts = async function(req, res){
+const getProducts = async function (req, res) {
     const product = req.params.p;
-    const url = `https://www.walmart.com/search/?grid=false&query=${product}&sort=best_match`;
-    let productsInfo = new Array();
-    let totalItems = 3;
-    let j = 0;
-    let response = {};
+    res.json(await getProductDetails(product));
+}
 
-    try{
-        let html = await axios.get(url);
-        let $ = cheerio.load(html.data);
-        let itemList = $(".search-result-gridview-items > li");
-        if(itemList.length == 0) itemList = $("#searchProductResult > div > div");
-        logger.info(`Itemlist length: ${itemList.length} and URL: ${url}`);
-        for(let i = 0; i < itemList.length; i++){
-            if(totalItems <= 0) break;
-            totalItems--;
-            productsInfo[j] = {};
-            productsInfo[j]['match'] = 0; // Initialize
-            productsInfo[j]['owner'] = "walmart";
-            productsInfo[j]['price'] = $(itemList[i]).find(".price-main-block").find(".visuallyhidden").text();
+function getProductDetails(p) {
+    return new Promise(async (resolve) => {
+        const product = p;
+        const url = `https://www.walmart.com/search/?grid=false&query=${product}&sort=best_match`;
+        // const url = `https://www.walmart.com/search/?query=${product}`;
+        logger.info(url);
+        let productsInfo = new Array();
+        let totalItems = 1;
+        let j = 0;
+        let response = {};
 
-            if(productsInfo[j]['price']){
-                productsInfo[j]['price'] = productsInfo[j]['price'].match(/([0-9,\.]+)/);
-                if(productsInfo[j]['price'].length > 0){
-                    productsInfo[j]['price'] = productsInfo[j]['price'][0].trim();
-                    productsInfo[j]['price'] = productsInfo[j]['price'].replace(",","");
+        try {
+            let html = await axios.get(url);
+            let $ = cheerio.load(html.data);
+            let itemList = $(".search-result-gridview-items > li");
+            if (itemList.length == 0) itemList = $("#searchProductResult > div > div");
+            logger.info(`Itemlist length: ${itemList.length} and URL: ${url}`);
+            for (let i = 0; i < itemList.length; i++) {
+                if (totalItems <= 0) break;
+                totalItems--;
+                productsInfo[j] = {};
+                productsInfo[j]['match'] = 0; // Initialize
+                productsInfo[j]['store'] = "walmart";
+                productsInfo[j]['price'] = $(itemList[i]).find(".price-main-block").find(".visuallyhidden").text();
+
+                if (productsInfo[j]['price']) {
+                    productsInfo[j]['price'] = productsInfo[j]['price'].match(/([0-9,\.]+)/);
+                    if (productsInfo[j]['price'].length > 0) {
+                        productsInfo[j]['price'] = productsInfo[j]['price'][0].trim();
+                        productsInfo[j]['price'] = productsInfo[j]['price'].replace(/\,/g,'');
+                    } else {
+                        productsInfo[j]['price'] = -1;
+                    }
                 } else {
                     productsInfo[j]['price'] = -1;
                 }
-            } else {
-                productsInfo[j]['price'] = -1;
-            }
 
-            productsInfo[j]['link'] = "http://walmart.com"+$(itemList[i]).find(".search-result-product-title > a").attr("href");
-            productsInfo[j]['name'] = $(itemList[i]).find(".search-result-product-title > a > span").text();
-            productsInfo[j]['match'] = stringSimilarity.compareTwoStrings(product.toLowerCase(), productsInfo[j]['name'].toLowerCase());
-            productsInfo[j]['ratings'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-avg-rating").text().trim();
-            productsInfo[j]['reviews'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-review-count").text().trim();
-            productsInfo[j]['img'] = $(itemList[i]).find("img").attr("src");
-            productsInfo[j]['index'] = j;
-            j++;
-        }
-        response['error'] = 0;
-        response['productsInfo'] = productsInfo;
-        res.json(response);
-    } catch (error) {
-        logger.error(error.message);
-        response['error'] = 1;
-        response['message'] = error.message;
-        res.json(response);
-    };
+                productsInfo[j]['link'] = "http://walmart.com" + $(itemList[i]).find(".search-result-product-title > a").attr("href");
+                productsInfo[j]['name'] = $(itemList[i]).find(".search-result-product-title > a > span").text();
+                productsInfo[j]['match'] = stringSimilarity.compareTwoStrings(product.toLowerCase(), productsInfo[j]['name'].toLowerCase());
+                productsInfo[j]['ratings'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-avg-rating").text().trim();
+                productsInfo[j]['reviews'] = $(itemList[i]).find(".search-result-product-rating").find(".seo-review-count").text().trim();
+                productsInfo[j]['img'] = $(itemList[i]).find("img").attr("src");
+                productsInfo[j]['index'] = j;
+                j++;
+            }
+            response['error'] = 0;
+            response['productsInfo'] = productsInfo;
+            return resolve(response);
+        } catch (error) {
+            logger.error(error.message);
+            response['error'] = 1;
+            response['message'] = error.message;
+            return resolve(response);
+        };
+    });
 }
 
 exports.productInfo = productInfo;
 exports.getProducts = getProducts;
+exports.getProductDetails = getProductDetails;

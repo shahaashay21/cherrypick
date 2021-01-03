@@ -87,6 +87,7 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
+  global.gPort = addr.port;
 }
 
 module.exports = server;

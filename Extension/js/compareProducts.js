@@ -43,7 +43,7 @@ function updateProductAndSuggestions(product){
             await updateProductsData(product, "isLoading", 1);
             $(`.syncProduct[pid=${product.pid}]`).find(".fas").addClass("fa-spin");
         }
-        log(`Name: ${product.name} and owner: ${product.owner}`, true);
+        log(`Name: ${product.name} and store: ${product.store}`, true);
         let [comparedProductsDetails, updatedProductDetails] = await Promise.all([compareProduct(product), getProductInfo(product)]);
         await updateSuggestedProduct(product, comparedProductsDetails, updatedProductDetails);
         return resolve();
@@ -58,12 +58,13 @@ function updateProductAndSuggestions(product){
  */
 function compareProduct(product){
     return new Promise(async (resolve) => {
-        let allWebsitesRequests = ALL_WEBSITES.filter(website => website != product.owner).map((website) => {
-            if(website != product.owner) return compareProductRequest(website, product.name)
-        });
-        let allWebsitesResponse = await Promise.all(allWebsitesRequests);
+        // let allWebsitesRequests = ALL_WEBSITES.filter(website => website != product.store).map((website) => {
+        //     if(website != product.store) return compareProductRequest(website, product.name)
+        // });
+        // let allWebsitesResponse = await Promise.all(allWebsitesRequests);
+        let allWebsitesResponse = await compareProductRequest("", product.name);
         log(`compareProduct`);
-        log(allWebsitesResponse);
+        console.log(allWebsitesResponse);
         let allProducts = new Array();
         for(let websiteResponse of allWebsitesResponse){
             if(websiteResponse.error == 0){
@@ -74,6 +75,11 @@ function compareProduct(product){
                         if(productInfo.price && productInfo.name){
                             allProducts.push(productInfo);
                             // Push the item and draw the product                       
+                        } else if (productInfo.price && websiteResponse.source == "google"){
+                            productInfo.name = websiteResponse.name;
+                            productInfo.match = websiteResponse.match;
+                            productInfo.img = websiteResponse.img;
+                            allProducts.push(productInfo);
                         }
                     });
                 }
@@ -86,22 +92,22 @@ function compareProduct(product){
 
 /**
  * AJAX request to get products for comparison
- * @param {String} compareAgainst // All other owners URL
+ * @param {String} compareAgainst // All other stores URL
  * @param {String} productName 
  */
 function compareProductRequest(compareAgainst, productName){
     return new Promise(resolve => {
         productName = productName.replace(/[^\x00-\x7F]/g, "");
         productName = encodeURIComponent(productName);
-        let urlPath = URL + compareAgainst + "/products/" + productName;
+        // let urlPath = URL + compareAgainst + "/products/" + productName;
+        let urlPath = URL + "compare/" + productName;
         $.ajax({
             url: urlPath,
             timeout: 6000,
             tryCount: 0,
-            retryLimit: 3,
+            retryLimit: 1,
             success: function (productInfo) {
                 log("Got the reply");
-                log(productInfo);
                 if(productInfo.error == 1){
                     log(`compare prodcut response has an error and message: ${productInfo.message}`);
                     this.tryCount++;
@@ -150,7 +156,7 @@ function getProductInfo(product){
                     if (typeof productInfo.error != "undefined" && productInfo.error == 0) {
                         productInfo = productInfo.productInfo;
                         var product = {};
-                        if(productInfo.owner) product["owner"] = productInfo.owner;
+                        if(productInfo.store) product["store"] = productInfo.store;
                         if(productInfo.link) product["link"] = productInfo.link;
                         if(productInfo.ratings) product["ratings"] = productInfo.ratings;
                         if(productInfo.price) product["price"] = productInfo.price;
@@ -178,9 +184,9 @@ function getProductInfo(product){
 
 /**
  * Add new suggested products
- * @param {String} productName 
- * @param {String} productOwner 
- * @param {JSON} productSuggestions 
+ * @param {String} productObject 
+ * @param {String} productSuggestions 
+ * @param {JSON} updatedProductDetails 
  */
 function updateSuggestedProduct(productObject, productSuggestions, updatedProductDetails){
     return new Promise(async resolve => {
@@ -191,7 +197,7 @@ function updateSuggestedProduct(productObject, productSuggestions, updatedProduc
                 if (products[infoType]) {
                     for (productKey in products[infoType]) {
                         let product = products[infoType][productKey];
-                        if (product && product.name == productObject.name && product.owner == productObject.owner && product.link == productObject.link) {
+                        if (product && product.name == productObject.name && product.store == productObject.store && product.link == productObject.link) {
                             product.newProduct = 0;
                             product.updatedTime = Date.now();
                             product.isLoading = 0;

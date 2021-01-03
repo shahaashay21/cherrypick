@@ -31,7 +31,7 @@ const productInfo = async function(req, res, next){
         }
         jsObject = JSON.parse(jsObject);
 
-        productInfo['owner'] = "target";
+        productInfo['store'] = "target";
 
         if(jsObject["@graph"]){
             let productObj = jsObject["@graph"][0];
@@ -73,85 +73,93 @@ const productInfo = async function(req, res, next){
 
 const getProducts = async function(req, res){
     let product = req.params.p;
-    const targetSearchChar = 90;
-    product = product.substring(0, targetSearchChar);
-    const url = `https://www.target.com/s?searchTerm=${product}`;
-    let productsInfo = new Array();
-    let totalItems = 3;
-    let j = 0;
-    let response = {};
+    res.json(await getProductDetails(product));
+}
 
-    try{ 
-        let html = await axios.get(url);
-        // Get JSON object to get API KEY
-        let jsObject = html.data.match(/__PRELOADED_STATE__.*?({.*?)<\/script>/);
-        if(jsObject.length == 2){
-            jsObject = jsObject[1].trim();
-        }
-        jsObject = JSON.parse(JSON.stringify(jsObject));
-        let targetApiKey = "";
-        if(jsObject["firefly"]){
-            if(jsObject["firefly"]["apiKey"]) targetApiKey = jsObject["firefly"]["apiKey"];
-        }
+function getProductDetails(p){
+    return new Promise(async (resolve) => {
+        let product = p;
+        const targetSearchChar = 90;
+        product = product.substring(0, targetSearchChar);
+        const url = `https://www.target.com/s?searchTerm=${product}`;
+        let productsInfo = new Array();
+        let totalItems = 1;
+        let j = 0;
+        let response = {};
 
-        // Another way to fetch API KEY (fallback)
-        if(!targetApiKey){
-            let targetApiKeyMatch = html.data.match(/"apiKey":"(.*?)",/);
-            if(targetApiKeyMatch.length == 2){
-                targetApiKey = targetApiKeyMatch[1];
+        try{ 
+            let html = await axios.get(url);
+            // Get JSON object to get API KEY
+            let jsObject = html.data.match(/__PRELOADED_STATE__.*?({.*?)<\/script>/);
+            if(jsObject.length == 2){
+                jsObject = jsObject[1].trim();
             }
-        }
+            jsObject = JSON.parse(JSON.stringify(jsObject));
+            let targetApiKey = "";
+            if(jsObject["firefly"]){
+                if(jsObject["firefly"]["apiKey"]) targetApiKey = jsObject["firefly"]["apiKey"];
+            }
 
-        // Get all the products detail in JSON
-        let priceUrl = `https://redsky.target.com/v2/plp/search/?&key=${targetApiKey}&keyword=${product}&pricing_store_id=2088`;
-        logger.info(`Target: products compare: ${priceUrl}`);
-
-        // Get price of the prduct using an API
-        let jsonResponse = await axios.get(priceUrl);
-        jsonResponse = jsonResponse.data;
-
-        if(jsonResponse["search_response"] && jsonResponse["search_response"]["items"]){
-            let itemList = jsonResponse["search_response"]["items"]["Item"];
-            for(let i = 0; i < itemList.length; i++){
-                if(totalItems <= 0) break;
-                totalItems--;
-                productsInfo[j] = {};
-                productsInfo[j]['match'] = 0; // Initialize
-                productsInfo[j]['owner'] = "target";
-                productsInfo[j]['name'] = itemList[j]["title"];
-                productsInfo[j]['match'] = stringSimilarity.compareTwoStrings(product.toLowerCase(), productsInfo[j]['name'].toLowerCase());
-                productsInfo[j]['link'] = `https://www.target.com${itemList[j]["url"]}`;
-                if(itemList[j]["images"] && itemList[j]["images"][0]){
-                    productsInfo[j]['img'] = `${itemList[j]["images"][0]["base_url"]}${itemList[j]["images"][0]["primary"]}?wid=325&hei=325&qlt=100&fmt=webp`;
+            // Another way to fetch API KEY (fallback)
+            if(!targetApiKey){
+                let targetApiKeyMatch = html.data.match(/"apiKey":"(.*?)",/);
+                if(targetApiKeyMatch.length == 2){
+                    targetApiKey = targetApiKeyMatch[1];
                 }
-                productsInfo[j]['ratings'] = itemList[j]["average_rating"];
-                productsInfo[j]['reviews'] = itemList[j]["total_reviews"];
-                if(itemList[j]["price"]){
-                    productsInfo[j]['price'] = itemList[j]["price"]["formatted_current_price"].match(/([0-9,\.]+)/);
-                    if(productsInfo[j]['price'].length > 0){
-                        productsInfo[j]['price'] = productsInfo[j]['price'][0].trim();
-                        productsInfo[j]['price'] = productsInfo[j]['price'].replace(",","");
+            }
+
+            // Get all the products detail in JSON
+            let priceUrl = `https://redsky.target.com/v2/plp/search/?&key=${targetApiKey}&keyword=${product}&pricing_store_id=2088`;
+            logger.info(`Target: products compare: ${priceUrl}`);
+
+            // Get price of the prduct using an API
+            let jsonResponse = await axios.get(priceUrl);
+            jsonResponse = jsonResponse.data;
+
+            if(jsonResponse["search_response"] && jsonResponse["search_response"]["items"]){
+                let itemList = jsonResponse["search_response"]["items"]["Item"];
+                for(let i = 0; i < itemList.length; i++){
+                    if(totalItems <= 0) break;
+                    totalItems--;
+                    productsInfo[j] = {};
+                    productsInfo[j]['match'] = 0; // Initialize
+                    productsInfo[j]['store'] = "target";
+                    productsInfo[j]['name'] = itemList[j]["title"];
+                    productsInfo[j]['match'] = stringSimilarity.compareTwoStrings(product.toLowerCase(), productsInfo[j]['name'].toLowerCase());
+                    productsInfo[j]['link'] = `https://www.target.com${itemList[j]["url"]}`;
+                    if(itemList[j]["images"] && itemList[j]["images"][0]){
+                        productsInfo[j]['img'] = `${itemList[j]["images"][0]["base_url"]}${itemList[j]["images"][0]["primary"]}?wid=325&hei=325&qlt=100&fmt=webp`;
+                    }
+                    productsInfo[j]['ratings'] = itemList[j]["average_rating"];
+                    productsInfo[j]['reviews'] = itemList[j]["total_reviews"];
+                    if(itemList[j]["price"]){
+                        productsInfo[j]['price'] = itemList[j]["price"]["formatted_current_price"].match(/([0-9,\.]+)/);
+                        if(productsInfo[j]['price'].length > 0){
+                            productsInfo[j]['price'] = productsInfo[j]['price'][0].trim();
+                            productsInfo[j]['price'] = productsInfo[j]['price'].replace(/\,/g,'');
+                        } else {
+                            productsInfo[j]['price'] = -1;
+                        }
                     } else {
                         productsInfo[j]['price'] = -1;
                     }
-                } else {
-                    productsInfo[j]['price'] = -1;
+                    productsInfo[j]['index'] = j;
+                    j++;
                 }
-                productsInfo[j]['index'] = j;
-                j++;
             }
-        }
 
-        response['error'] = 0;
-        response['productsInfo'] = productsInfo;
-        res.json(response);
-    } catch (error) {
-        logger.error(error.message);
-        response['error'] = 1;
-        response['message'] = error.message;
-        res.json(response);
-    }
+            response['error'] = 0;
+            response['productsInfo'] = productsInfo;
+            return resolve(response);
+        } catch (error) {
+            logger.error(error.message);
+            response['error'] = 1;
+            response['message'] = error.message;
+            return resolve(response);
+        }
+    });
 }
 
 exports.productInfo = productInfo;
 exports.getProducts = getProducts;
+exports.getProductDetails = getProductDetails;

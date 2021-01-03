@@ -1,7 +1,7 @@
 {
     "new": [
         {
-            "owner": "amazon",
+            "store": "amazon",
             "link": "Item link",
             "ratings": 4.5,
             "price": 70,
@@ -14,7 +14,7 @@
             "pid": "2hq6asd",
             "suggestions": [
                 {
-                    "owner": "walmart",
+                    "store": "walmart",
                     "price": 85,
                     "link": "Item link",
                     "img": "http://imagelink",
@@ -23,7 +23,7 @@
                     "index": 0
                 },
                 {
-                    "owner": "bestbuy",
+                    "store": "bestbuy",
                     "link": "Item link",
                     "price": 85,
                     "productName": "Name of the product",

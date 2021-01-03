@@ -5,6 +5,9 @@ var cookieParser = require('cookie-parser');
 var helmet = require('helmet');
 var logger = require('morgan');
 var session = require('express-session');
+var axios = require('axios');
+axios.defaults.headers.common['user-agent'] = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36`;
+axios.defaults.timeout = 2000;
 
 var winston = require('./utils/winston');
 
@@ -15,6 +18,9 @@ var bestbuyRouter = require('./routes/bestbuy');
 var walmartRouter = require('./routes/walmart');
 var targetRouter = require('./routes/target');
 var macysRouter = require('./routes/macys');
+var googleRouter = require('./routes/google');
+
+var compareRouter = require('./routes/compare');
 
 var feedbackRouter = require('./routes/feedback');
 var accountRouter = require('./routes/account');
@@ -68,6 +74,9 @@ app.use('/bestbuy', bestbuyRouter);
 app.use('/walmart', walmartRouter);
 app.use('/target', targetRouter);
 app.use('/macys', macysRouter);
+app.use('/google', googleRouter);
+
+app.use('/compare', compareRouter);
 
 app.use('/feedback', feedbackRouter);
 app.use('/account', accountRouter);

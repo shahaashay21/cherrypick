@@ -1,5 +1,5 @@
-// const URL = "http://localhost:3000/";
-const URL = "http://www.cherrypickify.com:3000/";
+const URL = "http://localhost:3000/";
+// const URL = "http://www.cherrypickify.com:3000/";
 
 const DEBUG = 1;
 // Initalize

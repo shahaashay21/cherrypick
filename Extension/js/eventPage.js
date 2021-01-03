@@ -2,9 +2,11 @@
  * Initialize loggly for logging FE
  */
 var _LTracker = _LTracker || [];
-    _LTracker.push({'logglyKey': '7c2fbce1-2a3d-4a7f-a885-cf068ee22a98',
-    'sendConsoleErrors' : true,
-    'tag' : 'loggly-jslogger'  });
+_LTracker.push({
+    'logglyKey': '7c2fbce1-2a3d-4a7f-a885-cf068ee22a98',
+    'sendConsoleErrors': true,
+    'tag': 'loggly-jslogger'
+});
 
 _LTracker.push('Hello World');
 
@@ -63,19 +65,19 @@ async function newProductListner(clickedData) {
 /**
  * Get product details from content script and then add it to the extension
  */
-function addNewProduct(){
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
-        chrome.tabs.sendMessage(tabs[0].id, {action: "getProductDetails"}, async function(response) {
+function addNewProduct() {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, { action: "getProductDetails" }, async function (response) {
             await addProductDetails(response, "saved");
             // await addProductDetails(response, "recent");
-        });  
+        });
     });
 }
 
 /**
  * Add a new product in a pending list
  * @param {String} link
- */ 
+ */
 function addPendingProduct(link) {
     return new Promise(resolve => {
         chrome.storage.local.get(["products"], function (chromeData) {
@@ -90,27 +92,27 @@ function addPendingProduct(link) {
 }
 
 // Remove or sync the product
-function syncOrRemoveOrSaveProduct(action, pid){
+function syncOrRemoveOrSaveProduct(action, pid) {
     return new Promise(async resolve => {
         let chromeData = await getStorageData();
         if (chromeData.products) {
             let products = JSON.parse(chromeData.products);
-            for(let infoType of PRODUCT_STORAGE_CATEGORIES){
+            for (let infoType of PRODUCT_STORAGE_CATEGORIES) {
                 if (products[infoType]) {
-                    if(action == "sync"){
+                    if (action == "sync") {
                         log(`PID: ${pid}`)
                         let product = products[infoType].find(product => product.pid == pid);
-                        if(product){
+                        if (product) {
                             log("Sending product--");
                             log(product);
                             await updateProductAndSuggestions(product);
                         }
-                    } else if(action == "remove"){
+                    } else if (action == "remove") {
                         products[infoType] = products[infoType].filter(product => product.pid != pid);
                         await setStorageData("products", JSON.stringify(products));
-                    } else if(action == "save"){
+                    } else if (action == "save") {
                         let product = products[infoType].find(product => product.pid == pid);
-                        if(product){
+                        if (product) {
                             let newProductInfo = {};
                             newProductInfo["error"] = 0;
                             newProductInfo["productInfo"] = { ...product };
@@ -130,10 +132,10 @@ function syncOrRemoveOrSaveProduct(action, pid){
  * @param {JSON} products 
  * @param {String} productLink 
  */
-function removePendingProduct(products, productLink){
+function removePendingProduct(products, productLink) {
     return new Promise(async resolve => {
-        for(let i = 0; i < products.pending.length; i++){
-            if(products.pending[i] == productLink){
+        for (let i = 0; i < products.pending.length; i++) {
+            if (products.pending[i] == productLink) {
                 products.pending.splice(i, 1);
             }
         }
@@ -155,9 +157,9 @@ async function drawProducts() {
         chrome.browserAction.setBadgeText({
             text: totalItems.toString()
         });
-        if(totalItems > 0) $("#savedWindowTitle").html(`Saved (${totalItems.toString()})`);
-        for(let infoType of PRODUCT_STORAGE_CATEGORIES){
-        // ["saved", "recent", "expired"].forEach(infoType => {
+        if (totalItems > 0) $("#savedWindowTitle").html(`Saved (${totalItems.toString()})`);
+        for (let infoType of PRODUCT_STORAGE_CATEGORIES) {
+            // ["saved", "recent", "expired"].forEach(infoType => {
             // Clear all the products first
             $(`#${infoType}Products`).html("");
             $(`#${infoType}SuggestedProducts`).html("");
@@ -166,9 +168,10 @@ async function drawProducts() {
                     log(`Product key: ${productKey}`);
                     let uniqueKey = `${infoType}-${productKey}`;
                     let product = products[infoType][productKey];
+                    console.log(product);
                     if (product && product.name) {
 
-                        if (!product.price || product.price == -1){
+                        if (!product.price || product.price == -1) {
                             product.price = `Not available`;
                         } else {
                             product.price = `$${product.price}`;
@@ -191,7 +194,7 @@ async function drawProducts() {
                                                 <div class="text-ellipses p-rating">Ratings: <span class="p-number">${product.ratings}</span></div>
                                             </div>
                                             <div>
-                                                <img src="../icons/${OWNER_ICONS[product.owner]}" alt="${product.owner}" height="36" width="40">
+                                                <img src="../icons/stores/${OWNER_ICONS[product.store]}" alt="${product.store}" height="36" width="40">
                                             </div>
                                         </div>
                                     </div>
@@ -199,13 +202,28 @@ async function drawProducts() {
                             </li>`;
                         $(`#${infoType}Products`).append(newProduct);
                     }
-                    
+
                     if (product && product.suggestions) {
                         $(`#${infoType}SuggestedProducts`).append(getCompareProductsHeader(uniqueKey, product.pid, product.updatedTime, product.isLoading, infoType));
-                        if(product.suggestions.length > 0){
+                        if (product.suggestions.length > 0) {
                             product.suggestions.forEach(suggestedProduct => {
 
-                                if (!suggestedProduct.price || suggestedProduct.price == -1 || suggestedProduct.price == "Not available"){
+                                let imgHtml = ``;
+                                let matchedStoreImg;
+                                if(OWNER_ICONS[suggestedProduct.store.toLowerCase()]){
+                                    matchedStoreImg =  OWNER_ICONS[suggestedProduct.store.toLowerCase()];
+                                } else {
+                                    matchedStoreImg = getPropertyByRegex(OWNER_ICONS, suggestedProduct.store);
+                                }
+
+                                if(matchedStoreImg){
+                                    imgHtml =  `<img src="../icons/stores/${matchedStoreImg}" height="40" width="50" alt="company name">`;
+                                } else {
+                                    imgHtml = `<p class="p-number" style="font-size: 14px; color: olive">${suggestedProduct.store}</p>`;
+                                }
+                                
+
+                                if (!suggestedProduct.price || suggestedProduct.price == -1 || suggestedProduct.price == "Not available") {
                                     suggestedProduct.price = `Not available`;
                                 } else {
                                     suggestedProduct.price = `$${suggestedProduct.price}`;
@@ -214,8 +232,8 @@ async function drawProducts() {
                                 if (!suggestedProduct.img) suggestedProduct.img = `../icons/img-not-available.png`;
 
 
-                                let suggestedProductHtml = 
-                                    `<li class="media ${uniqueKey} suggestedProduct" style="cursor: pointer;" url="${suggestedProduct.link}" owner="${suggestedProduct.owner}" name="${suggestedProduct.name}">
+                                let suggestedProductHtml =
+                                    `<li class="media ${uniqueKey} suggestedProduct" style="cursor: pointer;" url="${suggestedProduct.link}" store="${suggestedProduct.store}" name="${suggestedProduct.name}">
                                         <img src="${suggestedProduct.img}" height="50" width="50" style="margin-top: 7px;" class="rounded-circle mr-1" alt="Product image not available">
                                         <div class="media-body">
                                             <div style="max-width: 320px;">
@@ -227,7 +245,7 @@ async function drawProducts() {
                                                         <div class="text-ellipses p-rating">Ratings: <span class="p-number">${suggestedProduct.ratings}</span></div>
                                                     </div>
                                                     <div class="ps-company-img">
-                                                        <img src="../icons/${OWNER_ICONS[suggestedProduct.owner]}" height="40" width="50" alt="company name">
+                                                        ${imgHtml}
                                                     </div>
                                                 </div>
                                             </div>
@@ -238,8 +256,8 @@ async function drawProducts() {
                         } else {
                             // No products to compare (no product image)
                             let img = Math.floor(Math.random() * 4) + 1;
-                            let suggestedProductHtml = 
-                            `<li class="justify-content-center ${uniqueKey} suggestedProduct" style="display: grid;">
+                            let suggestedProductHtml =
+                                `<li class="justify-content-center ${uniqueKey} suggestedProduct" style="display: grid;">
                                 <img src="../icons//dogs/${img}.png" height="200" width="200" style="margin-top: 10px;" class="mr-1" alt="...">
                                 <span>No products available to compare</span>
                             </li>`;
@@ -260,21 +278,21 @@ async function drawProducts() {
  * @param {String} pid 
  * @param {Date} updatedTime 
  */
-function getCompareProductsHeader(uniqueKey, pid, updatedTime, isLoading, infoType){
+function getCompareProductsHeader(uniqueKey, pid, updatedTime, isLoading, infoType) {
     let d = new Date(updatedTime);
     let isLoadingClass = "";
     let savedIcon = "";
-    if(isLoading) isLoadingClass = "fa-spin";
-    if(infoType != "saved"){
-        savedIcon = 
-        `<li class="nav-item mx-2">
+    if (isLoading) isLoadingClass = "fa-spin";
+    if (infoType != "saved") {
+        savedIcon =
+            `<li class="nav-item mx-2">
             <span style="font-size: 1.5em; color: #28a745; cursor: pointer" data-toggle="tooltip" data-placement="top" title="Save Product" class="saveProduct" pid="${pid}">
                 <i class="fas fa-cloud-download-alt"></i>
             </span>
         </li>`;
     }
-    let headerHtml = 
-    `<div class="container-fluid bg-light border-bottom border-danger p-0 mb-3 px-2 ${uniqueKey} suggestedProduct">
+    let headerHtml =
+        `<div class="container-fluid bg-light border-bottom border-danger p-0 mb-3 px-2 ${uniqueKey} suggestedProduct">
         <div class="row">
             <div class="col-sm-7">
                 <p style="margin-top: 18px;font-size: 0.8rem; color: darkgray;"> Last updated: ${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getHours()}:${d.getMinutes()}</p>
@@ -307,7 +325,7 @@ function getCompareProductsHeader(uniqueKey, pid, updatedTime, isLoading, infoTy
  * jQuery setup after displaying all the products of the individual category
  * @param {String} typeId 
  */
-function setupJquery(typeId){
+function setupJquery(typeId) {
     jqueryDisplaySuggestedProducts(typeId);
     $('[data-toggle="tooltip"]').tooltip();
 }
@@ -315,7 +333,7 @@ function setupJquery(typeId){
 /**
  * jQuery setup after drawProducts complete
  */
-function setupJqueryAfterDrawProduct(){
+function setupJqueryAfterDrawProduct() {
     $(".tooltip").hide();
     jqueryDisplaySelectedProduct();
     jquerySyncOrRemoveFunc();
@@ -326,9 +344,9 @@ function setupJqueryAfterDrawProduct(){
  * Save recentClickedProduct before user clicks on the product so we can ignore the product to add into recent products
  * @param {String} typeId 
  */
-function jqueryDisplaySuggestedProducts(typeId){
+function jqueryDisplaySuggestedProducts(typeId) {
     // After drawing the product details, set Jquery to open product's suggestions on click
-    $(`#${typeId}Products > li`).bind('click', function(){
+    $(`#${typeId}Products > li`).bind('click', function () {
         $(".suggestedProduct").hide();
         $("." + $(this).attr('id')).show();
         $(this).siblings().removeClass("active-product");
@@ -337,9 +355,9 @@ function jqueryDisplaySuggestedProducts(typeId){
     });
 
     // Save recentClickedProduct before user clicks on the product so we can ignore the product to add into recent products
-    $(`#${typeId}SuggestedProducts > li`).bind('click', async function(){
+    $(`#${typeId}SuggestedProducts > li`).bind('click', async function () {
         // Add cookie with expiration time to ignore the current item from adding to the recent items
-        await setStorageData("recentClickedProduct", JSON.stringify({owner: $(this).attr('owner'), name: $(this).attr('name')}));
+        await setStorageData("recentClickedProduct", JSON.stringify({ store: $(this).attr('store'), name: $(this).attr('name') }));
         chrome.tabs.create({ url: $(this).attr('url') });
     });
 }
@@ -347,13 +365,13 @@ function jqueryDisplaySuggestedProducts(typeId){
 /**
  * Find last visited product by user and show the same product even after the update (drawProducts())
  */
-function jqueryDisplaySelectedProduct(){
-    chrome.storage.local.get(["lastSelectedId"], function (chromeData){
+function jqueryDisplaySelectedProduct() {
+    chrome.storage.local.get(["lastSelectedId"], function (chromeData) {
         let lastSelectedId = chromeData.lastSelectedId;
-        if(lastSelectedId){
+        if (lastSelectedId) {
             let jqueryPID = $(`[pid=${lastSelectedId}]`);
-            if(jqueryPID.length > 0){
-                jqueryPID.trigger( "click" );
+            if (jqueryPID.length > 0) {
+                jqueryPID.trigger("click");
             } else {
                 openLastWindow();
             }
@@ -366,14 +384,14 @@ function jqueryDisplaySelectedProduct(){
 /**
  * jQuery to sync and delete product (individual) events
  */
-function jquerySyncOrRemoveFunc(){
-    $(`.syncProduct`).bind('click', function(){
+function jquerySyncOrRemoveFunc() {
+    $(`.syncProduct`).bind('click', function () {
         syncOrRemoveOrSaveProduct("sync", $(this).attr("pid"));
     });
-    $(`.removeProduct`).bind('click', function(){
+    $(`.removeProduct`).bind('click', function () {
         syncOrRemoveOrSaveProduct("remove", $(this).attr("pid"));
     });
-    $(`.saveProduct`).bind('click', function(){
+    $(`.saveProduct`).bind('click', function () {
         syncOrRemoveOrSaveProduct("save", $(this).attr("pid"));
     });
 }
@@ -383,7 +401,7 @@ function jquerySyncOrRemoveFunc(){
  * @param {JSON} productInfo 
  * @param {String} infoType 
  */
-function addProductDetails(productInfo, infoType){
+function addProductDetails(productInfo, infoType) {
     return new Promise(resolve => {
         chrome.storage.local.get(["products", "defaultOptions"], async function (chromeData) {
             let products = JSON.parse(chromeData.products);
@@ -391,7 +409,7 @@ function addProductDetails(productInfo, infoType){
             if (typeof productInfo != "undefined" && typeof productInfo.error != "undefined" && productInfo.error == 0 && productInfo.productInfo.name) {
                 productInfo = productInfo.productInfo;
                 let newProduct = {};
-                newProduct["owner"] = productInfo.owner;
+                newProduct["store"] = productInfo.store;
                 newProduct["link"] = productInfo.link;
                 newProduct["ratings"] = productInfo.ratings;
                 newProduct["price"] = productInfo.price;
@@ -409,8 +427,8 @@ function addProductDetails(productInfo, infoType){
                 }
                 products[infoType].push(newProduct);
                 products[infoType].sort(function (a, b) { return b["createdTime"] - a["createdTime"] });
-                if(infoType == "recent"){ // if the product reaches to the max limit then remove oldest product
-                    if(products[infoType].length > defaultOptions.maxDefaultRecentProducts){
+                if (infoType == "recent") { // if the product reaches to the max limit then remove oldest product
+                    if (products[infoType].length > defaultOptions.maxDefaultRecentProducts) {
                         products[infoType].splice(products[infoType].length - 1, 1);
                     }
                     // if the product is new then make it as a recent visited product so when user opens the CP, it shows the last added product
@@ -423,7 +441,7 @@ function addProductDetails(productInfo, infoType){
                     return resolve();
                 });
             } else {
-                if(typeof productInfo != "undefined" &&productInfo.error == 1){
+                if (typeof productInfo != "undefined" && productInfo.error == 1) {
                     log(productInfo.message);
                 } else {
                     log("Couldn't get the product information");
@@ -444,9 +462,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         (async () => {
             let chromeData = await getStorageData();
             let defaultOptions = JSON.parse(chromeData.defaultOptions);
-            if(defaultOptions.ignoreRecentProduct && chromeData.recentClickedProduct){
+            if (defaultOptions.ignoreRecentProduct && chromeData.recentClickedProduct) {
                 let recentClickedProduct = JSON.parse(chromeData.recentClickedProduct);
-                if(request.source && request.source.productInfo && recentClickedProduct.owner != request.source.productInfo.owner && recentClickedProduct.name == request.source.productInfo.name){
+                if (request.source && request.source.productInfo && recentClickedProduct.store != request.source.productInfo.store && recentClickedProduct.name == request.source.productInfo.name) {
                     addProductDetails(request.source, "recent");
                 }
             } else {
@@ -468,7 +486,6 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
  * Compare and draw products as soon as document is loaded
  */
 $(document).ready(async (e) => {
-    log("Testing");
     await updateProductsData("", "isLoading", 0, true);
     drawProducts();
     $(".ex").click(async (e) => {
