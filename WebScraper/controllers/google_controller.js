@@ -27,7 +27,7 @@ function getProductDetails(p, page = 0) {
             let googleShoppingURL = `https://www.google.com/search?tbm=shop&psb=1&hl=en-US&q=${p}`;
             let prdsExtraOptions = `,start:0,num:${TOTAL_SUGGESTED_PRODUCTS}`;
             let hostName = "localhost";
-            if(process.env.NODE_ENV == 'production'){
+            if(process.env.NODE_ENV.trim() == "production"){
                 hostName = process.env.hostname;
             }
             let productUrl = `http://${hostName}:${gPort}/google/redirect?url=`
