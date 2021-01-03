@@ -20,15 +20,15 @@ app.post("/autodeploy", function (req, res) {
 
 
 app.get("/autodeploy", function (req, res) {
-    autodeploy(req, res);
+    autodeploy(req, res, 1);
 });
 
 
-function autodeploy(req, res){
+function autodeploy(req, res, ignore = 0){
     var sender = req.body.sender;
     var branch = req.body.repository.default_branch;
 
-    if(branch.indexOf('master') > -1 && sender.login === githubUsername){
+    if(ignore || ((branch && branch.indexOf('master') > -1) && sender.login === githubUsername)){
         deploy(res);
     }
 }
