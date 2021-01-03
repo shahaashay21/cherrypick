@@ -11,7 +11,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.get('/', (req, res) => {
-  res.send('Hello World!');
+    res.send('Hello World!');
 })
 
 app.post("/autodeploy", function (req, res) {
@@ -24,27 +24,31 @@ app.get("/autodeploy", function (req, res) {
 });
 
 
-function autodeploy(req, res, ignore = 0){
-    var sender = req.body.sender;
-    var branch = req.body.repository.default_branch;
+function autodeploy(req, res, ignore = 0) {
+    if (!ignore) {
+        var sender = req.body.sender;
+        var branch = req.body.repository.default_branch;
 
-    if(ignore || ((branch && branch.indexOf('master') > -1) && sender.login === githubUsername)){
+        if (ignore || ((branch && branch.indexOf('master') > -1) && sender.login === githubUsername)) {
+            deploy(res);
+        }
+    } else {
         deploy(res);
     }
 }
 
 const out = fs.openSync('../deploy.out', 'a');
 const err = fs.openSync('../deploy.out', 'a');
-function deploy(res){
+function deploy(res) {
     const child = spawn('/usr/src/deploy.sh', [], {
         detached: true,
-        stdio: [ 'ignore', out, err ]
+        stdio: ['ignore', out, err]
     });
-    
+
     child.unref();
     res.send(200);
 }
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+    console.log(`Example app listening at http://localhost:${port}`);
 })
