@@ -10,7 +10,11 @@ const productInfo = async function(req, res, next){
 
     const start = Date.now();
     try {
-        let html = await axios.get(url);
+        let html = await axios.get(url, {
+            headers: {
+                "user-agent": ""
+            }
+        });
         const takenTime = Date.now() - start;
         logger.info(`Time taken to get Bestbuy information: ${takenTime} and URL: ${url}`);
         let $ = cheerio.load(html.data);

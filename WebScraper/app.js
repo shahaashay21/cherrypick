@@ -1,6 +1,6 @@
 require('dotenv').config();
 var compression = require('compression');
-var helmet = require('helmet')
+var helmet = require('helmet');
 
 var createError = require('http-errors');
 var express = require('express');
@@ -12,6 +12,8 @@ var session = require('express-session');
 var axios = require('axios');
 axios.defaults.headers.common['user-agent'] = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36`;
 axios.defaults.timeout = 2000;
+var helper = require('./utils/helper');
+axios.interceptors.request.use(helper.requestTimeoutInterceptor);
 
 var winston = require('./utils/winston');
 

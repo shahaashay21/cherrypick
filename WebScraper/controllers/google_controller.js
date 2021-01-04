@@ -27,7 +27,7 @@ function getProductDetails(p, page = 0) {
             let googleShoppingURL = `https://www.google.com/search?tbm=shop&psb=1&hl=en-US&q=${p}`;
             let prdsExtraOptions = `,start:0,num:${TOTAL_SUGGESTED_PRODUCTS}`;
             let hostName = "localhost";
-            if(process.env.NODE_ENV.trim() == "production"){
+            if (process.env.NODE_ENV && process.env.NODE_ENV.trim() == "production") {
                 hostName = process.env.hostname;
             }
             let productUrl = `http://${hostName}:${gPort}/google/redirect?url=`
@@ -57,7 +57,7 @@ function getProductDetails(p, page = 0) {
 
                 // Get the product name
                 response.name = $("div.HsDfZc:nth-child(2) > div:nth-child(2) a").text();
-                if(response.name){
+                if (response.name) {
                     response.match = helper.stringSimilarity(p, response.name);
                 }
                 // Get the product description
@@ -70,7 +70,7 @@ function getProductDetails(p, page = 0) {
                     let raw = Buffer.from(image.data).toString('base64');
                     response.img = "data:" + image.headers["content-type"] + ";base64," + raw;
                 }
-                
+
                 // logger.info("Total numbers of google products: " + $("div#online > div.t9KcM").length);
                 $("div#online > div.t9KcM").each((i, e) => {
                     let eachProduct = {};
@@ -82,7 +82,7 @@ function getProductDetails(p, page = 0) {
                             let priceAndStatusText = $(priceInfo[0]).text();
                             if (priceAndStatusText) {
                                 let priceAndStatus = priceAndStatusText.split(" ");
-                                if (priceAndStatus) eachProduct.price = priceAndStatus[0].substring(1).replace(/\,/g,'');
+                                if (priceAndStatus) eachProduct.price = priceAndStatus[0].substring(1).replace(/\,/g, '');
                                 if (priceAndStatus && priceAndStatus[1]) eachProduct.status = priceAndStatus[1];
                             }
                         }
@@ -119,7 +119,7 @@ function getProductDetails(p, page = 0) {
                         let ratingMatches = eachProduct.feedback.match(/(\d+)%/);
                         if (reviewMatches && reviewMatches.length > 1) {
                             eachProduct.reviews = reviewMatches[1];
-                            eachProduct.reviews = eachProduct.reviews.replace(/\,/g,'');
+                            eachProduct.reviews = eachProduct.reviews.replace(/\,/g, '');
                         }
                         if (ratingMatches && ratingMatches.length > 1) {
                             eachProduct.ratings = (ratingMatches[1] * 5) / 100;
@@ -155,11 +155,30 @@ let redirectGoogleProduct = async (req, res) => {
     try {
         let pUrl = req.query.url;
         pUrl = decodeURIComponent(pUrl);
-        console.log(pUrl);
-        let productURL = await axios.get(pUrl);
-        console.log(productURL);
-        logger.info(`Redirecting to ${productURL.request.res.responseUrl}`);
-        res.redirect(productURL.request.res.responseUrl);
+        let productURL;
+        try {
+            productURL = await axios.get(pUrl, {timeout: 3000});
+        } catch (error) {
+            if (error && error.message && error.message.includes("Cancelled request") > -1) {
+                try{
+                    productURL = await axios.get(pUrl, {
+                        headers: {
+                            "user-agent": ""
+                        },
+                        timeout: 3000
+                    });
+                } catch (error) {
+                    logger.error(`Failed to resolve to store URL, ${error.message}`);
+                }
+            }
+        }
+        if(productURL.request && productURL.request.res && productURL.request.res.responseUrl){
+            logger.info(`Redirecting to ${productURL.request.res.responseUrl}`);
+            res.redirect(productURL.request.res.responseUrl);
+        } else {
+            logger.info(`Redirecting to ${pUrl}`);
+            res.redirect(pUrl);
+        }
     } catch (error) {
         res.send(error);
     }
