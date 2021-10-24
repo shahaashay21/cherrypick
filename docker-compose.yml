@@ -6,7 +6,7 @@ services:
       dockerfile: docker-webscraper.yml
     container_name: webscrape-container
     volumes:
-     - /usr/src/logs:/usr/src/logs
+     - /usr/src/cherry-pick/logs:/usr/src/Cherry-Pick/logs
     ports:
      - "3000:3000"
     depends_on:
