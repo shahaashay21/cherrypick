@@ -40,7 +40,7 @@ function autodeploy(req, res, ignore = 0) {
 const out = fs.openSync('../deploy.out', 'a');
 const err = fs.openSync('../deploy.out', 'a');
 function deploy(res) {
-    const child = spawn('/usr/src/deploy.sh', [], {
+    const child = spawn('/usr/src/cherry-pick/deploy.sh', [], {
         detached: true,
         stdio: ['ignore', out, err]
     });
