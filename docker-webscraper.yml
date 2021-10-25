@@ -8,7 +8,14 @@ WORKDIR /usr/src
 
 RUN git clone https://github.com/shahaashay21/Cherry-Pick
 
+COPY ./.env /usr/src/Cherry-Pick/WebScraper/.env
+
 WORKDIR /usr/src/Cherry-Pick/WebScraper
 
 RUN npm install
-CMD ["npm", "start"]
+
+RUN npm install pm2 -g
+ENV PM2_PUBLIC_KEY 2l9k02ewvhkk8l3
+ENV PM2_SECRET_KEY e47qm4e9duuehid
+
+CMD ["pm2-runtime", "./bin/www", "--only", "cherrypick"]
