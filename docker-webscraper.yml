@@ -4,13 +4,13 @@ MAINTAINER Aashay Shah <shah.aashay21@gmail.com>
 
 RUN apt-get update
 
-WORKDIR /usr/src
+WORKDIR /srv
 
 RUN git clone https://github.com/shahaashay21/Cherry-Pick
 
-COPY ./.env /usr/src/Cherry-Pick/WebScraper/.env
+COPY ./.env /srv/Cherry-Pick/WebScraper/.env
 
-WORKDIR /usr/src/Cherry-Pick/WebScraper
+WORKDIR /srv/Cherry-Pick/WebScraper
 
 RUN npm install
 
