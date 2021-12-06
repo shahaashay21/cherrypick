@@ -14,6 +14,7 @@ nohup node app.js >> ../autodeploy.out 2>&1 &
 cd /srv/cherry-pick
 
 rm -rf /srv/cherry-pick/docker-compose.yml
+rm -rf /srv/cherry-pick/docker-webscraper.yml
 
 curl -L https://raw.githubusercontent.com/shahaashay21/Cherry-Pick/master/docker-compose.yml -o docker-compose.yml -s
 curl -L https://raw.githubusercontent.com/shahaashay21/Cherry-Pick/master/docker-webscraper.yml -o docker-webscraper.yml -s
